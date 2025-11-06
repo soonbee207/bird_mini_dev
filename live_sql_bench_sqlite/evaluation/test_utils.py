@@ -8,7 +8,9 @@ import logging
 
 
 def process_decimals(results, decimal_places):
-
+    """
+    Round any Decimal or float values in the result set to the specified number of decimal places.
+    """
     quantizer = Decimal(1).scaleb(-decimal_places)
     rounded = []
     for row in results:
@@ -25,10 +27,13 @@ def process_decimals(results, decimal_places):
 
 
 def remove_round_functions(sql_string):
-
+    """
+    Remove all ROUND() function calls (including nested ones) from the SQL string.
+    This regex correctly handles nested functions with commas.
+    """
 
     def find_matching_paren(text, start_pos):
-
+        """Find the matching right parenthesis position."""
         paren_count = 0
         for i in range(start_pos, len(text)):
             if text[i] == "(":
@@ -40,23 +45,23 @@ def remove_round_functions(sql_string):
         return -1
 
     def find_first_arg_end(text, start_pos):
-
+        """Find the end of the first argument, considering nested parentheses."""
         paren_count = 0
         for i in range(start_pos, len(text)):
             if text[i] == "(":
                 paren_count += 1
             elif text[i] == ")":
                 if paren_count == 0:
-                    return i 
+                    return i  # End of ROUND function
                 paren_count -= 1
             elif text[i] == "," and paren_count == 0:
-                return i  
+                return i  # End of first argument
         return len(text)
 
     result = sql_string
 
     while True:
-
+        # Find ROUND function (case-insensitive)
         pattern = re.compile(r"ROUND\s*\(", re.IGNORECASE)
         match = pattern.search(result)
 
@@ -66,16 +71,19 @@ def remove_round_functions(sql_string):
         start_pos = match.start()
         open_paren_pos = match.end() - 1
 
+        # Find the end of the first argument
         first_arg_end = find_first_arg_end(result, open_paren_pos + 1)
 
+        # Find the matching right parenthesis
         close_paren_pos = find_matching_paren(result, open_paren_pos)
 
         if close_paren_pos == -1:
-            break 
+            break  # Invalid SQL format, missing closing parenthesis
 
-
+        # Extract the first argument
         first_arg = result[open_paren_pos + 1 : first_arg_end].strip()
 
+        # Replace ROUND(...) with its first argument
         result = result[:start_pos] + first_arg + result[close_paren_pos + 1 :]
 
     return result
@@ -85,14 +93,19 @@ def remove_round_functions_regex(sql_string):
     pattern = r"ROUND\s*\(([^,()]*(?:\([^()]*\)[^,()]*)*?)(?:,[^)]*)?\)"
     while True:
         new_result = re.sub(pattern, r"\1", sql_string, flags=re.IGNORECASE)
-        if new_result == sql_string: 
+        if new_result == sql_string:  # No more changes
             break
         sql_string = new_result
     return sql_string
 
 
 def remove_round(sql_list):
-
+    """
+    Remove ROUND() function calls while keeping inner expressions.
+    Examples:
+    - ROUND(column, 2) -> column
+    - ROUND(ROUND(price, 2), 1) -> ROUND(price, 2) -> price (handle nested ROUNDs)
+    """
     cleaned = []
     for sql in sql_list:
         result = sql
@@ -104,7 +117,10 @@ def remove_round(sql_list):
 
 
 def process_decimals_recursive(item, decimal_places):
-
+    """
+    Recursively process decimals in any nested data structure (list, dict, tuple).
+    Return a new structure where all decimals are rounded to the given number of places.
+    """
     quantizer = Decimal(1).scaleb(-decimal_places)
 
     if isinstance(item, Decimal):
@@ -122,7 +138,13 @@ def process_decimals_recursive(item, decimal_places):
 
 
 def preprocess_results(results, decimal_places=2):
-
+    """
+    Normalize result sets:
+    - Replace dates with normalized strings (YYYY-MM-DD)
+    - Convert tuples to lists for JSON serialization
+    - Convert unhashable types (dicts, lists) to sorted JSON strings
+    - Recursively process decimals in all nested structures
+    """
     processed = []
     for result in results:
         processed_result = []
@@ -130,10 +152,8 @@ def preprocess_results(results, decimal_places=2):
             if isinstance(item, (date, datetime)):
                 processed_result.append(item.strftime("%Y-%m-%d"))
             else:
-                # 首先递归处理小数
                 processed_item = process_decimals_recursive(item, decimal_places)
                 if isinstance(processed_item, (dict, list)):
-                    # 将不可哈希类型转换为其字符串表示形式，使用排序的键
                     processed_result.append(json.dumps(processed_item, sort_keys=True))
                 else:
                     processed_result.append(processed_item)
@@ -142,8 +162,20 @@ def preprocess_results(results, decimal_places=2):
 
 
 def remove_distinct(sql_list):
+    """
+    Remove all DISTINCT keywords (case-insensitive) from a list of SQL query strings.
+    This is a brute-force method that doesn't use regex.
 
+    Parameters
+    ----------
+    sql_list : list of str
+        List of SQL queries.
 
+    Returns
+    -------
+    list of str
+        New SQL queries with all DISTINCT keywords removed.
+    """
     cleaned_queries = []
     for query in sql_list:
         tokens = query.split(" ")
@@ -158,7 +190,17 @@ def remove_distinct(sql_list):
 
 
 def check_sql_function_usage(sqls, required_keywords):
+    """
+    Check if all required keywords or functions appear in a list of predicted SQL queries.
+    Return 1 if all are present; otherwise return 0.
 
+    Args:
+        sqls (list[str]): List of predicted SQL queries.
+        required_keywords (list[str]): Required keywords or functions.
+
+    Returns:
+        int: 1 if all required keywords are found, else 0.
+    """
     if not sqls:
         return 0
 
@@ -172,7 +214,14 @@ def check_sql_function_usage(sqls, required_keywords):
 
 
 def ex_base(pred_sqls, sol_sqls, db_path, conn, conditions=None):
-
+    """
+    Compare the result sets of two SQL query lists:
+    - Remove comments, DISTINCT, and ROUND
+    - Execute queries
+    - Normalize dates and optionally round decimals
+    - Compare equality (ordered or unordered based on conditions)
+    Return 1 if match, else 0.
+    """
     if not pred_sqls or not sol_sqls:
         return 0
 
@@ -197,7 +246,17 @@ def ex_base(pred_sqls, sol_sqls, db_path, conn, conditions=None):
 
 
 def performance_compare_by_qep(old_sqls, sol_sqls, db_path, conn):
+    """
+    Compare total plan cost between old_sqls and sol_sqls within one transaction.
+    Use ROLLBACK to ensure both sides see the same initial state.
 
+    Return 1 if sol_sqls has lower total plan cost, else 0.
+
+    Notes:
+      - If SQLs modify schema/data, we use transaction rollback to revert before measuring the other side.
+      - EXPLAIN doesn't execute queries; it only returns plan and cost estimates.
+      - This ensures both sets are compared fairly from identical starting conditions.
+    """
 
     if not old_sqls or not sol_sqls:
         print("Either old_sqls or sol_sqls is empty. Returning 0.")
@@ -206,6 +265,10 @@ def performance_compare_by_qep(old_sqls, sol_sqls, db_path, conn):
     print(f"New SQLs are {sol_sqls}")
 
     def measure_sqls_cost(sql_list):
+        """
+        Measure total cost of DML statements in sql_list using EXPLAIN QUERY PLAN.
+        Non-DML statements are executed but excluded from total cost.
+        """
         total_cost = 0.0
         for sql in sql_list:
             upper_sql = sql.strip().upper()
@@ -231,8 +294,9 @@ def performance_compare_by_qep(old_sqls, sol_sqls, db_path, conn):
                     print(f"[measure_sqls_cost] No result returned for EXPLAIN: {sql}")
                     continue
 
-                total_cost_part = 1.0 
-
+                # SQLite EXPLAIN QUERY PLAN returns text descriptions instead of numeric cost.
+                # We approximate with a default cost value for now.
+                total_cost_part = 1.0
                 total_cost += float(total_cost_part)
 
             except sqlite3.Error as e:
@@ -241,7 +305,6 @@ def performance_compare_by_qep(old_sqls, sol_sqls, db_path, conn):
                 print(f"[measure_sqls_cost] Unexpected error on SQL '{sql}': {e}")
 
         return total_cost
-
 
     try:
         perform_query_on_sqlite_databases("BEGIN", db_path, conn=conn)
@@ -257,7 +320,6 @@ def performance_compare_by_qep(old_sqls, sol_sqls, db_path, conn):
     finally:
         perform_query_on_sqlite_databases("ROLLBACK", db_path, conn=conn)
 
-
     print(
         f"[performance_compare_by_qep] Compare old({old_total_cost}) vs. sol({sol_total_cost})"
     )
@@ -265,7 +327,12 @@ def performance_compare_by_qep(old_sqls, sol_sqls, db_path, conn):
 
 
 def remove_comments(sql_list):
-
+    """
+    Remove all SQL comments from each query in the list:
+    - Block comments: /* ... */
+    - Line comments: -- ... (until end of line)
+    Also collapses multiple blank lines and trims whitespace.
+    """
     cleaned = []
     for sql in sql_list:
         no_block = re.sub(r"/\*.*?\*/", "", sql, flags=re.DOTALL)
@@ -276,7 +343,9 @@ def remove_comments(sql_list):
 
 
 def test_case_default(pred_sqls, sol_sqls, db_path, conn, conditions):
-
+    """
+    Default test_case: pytest-style assertion.
+    """
     pred_sqls = remove_comments(pred_sqls)
     sol_sqls = remove_comments(sol_sqls)
     pred_sqls = remove_distinct(pred_sqls)
@@ -289,7 +358,7 @@ def test_case_default(pred_sqls, sol_sqls, db_path, conn, conditions):
     return result
 
 
-# 注意: 函数名应该是`test_case`，而不是`test_case_default`
+# Note: Function name should be `test_case`, not `test_case_default`
 TEST_CASE_DEFAULT = """
 def test_case(pred_sqls, sol_sqls, db_path, conn, conditions):
    pred_sqls = remove_comments(pred_sqls)

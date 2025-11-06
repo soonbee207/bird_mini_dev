@@ -56,7 +56,8 @@ python xxx/post_process_baseline.py --input_path $input_path --output_path $outp
 Now we can evaluate the generated SQL queries against the SQLite databases. Use the following script to evaluate the post-processed SQL queries:
 ```bash
 cd evaluation
-# # You need to modify the JSONL location or use the HuggingFace dataset in the evaluation.py file
+# You need to modify the JSONL location and the database path in the run_eval.sh file
 jsonl_file="xxx/post_processed_sql.jsonl" # Replace with your desired output path
-python wrapper_evaluation_sqlite.py --jsonl_file $jsonl_file
+db_path="xxx/database" # Replace with your database path
+bash run_eval.sh
 ```

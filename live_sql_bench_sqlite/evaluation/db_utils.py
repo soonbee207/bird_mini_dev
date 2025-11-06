@@ -224,7 +224,7 @@ def reset_and_restore_database(db_path, pg_password, logger):
     )
 
 
-def create_ephemeral_db_copies(base_db_names, num_copies, pg_password, logger):
+def create_ephemeral_db_copies(db_path, base_db_names, num_copies, pg_password, logger):
     """
     Create num_copies ephemeral copies for each base database
     Return dictionary: {base_db: [ephemeral1_path, ephemeral2_path, ...], ...}

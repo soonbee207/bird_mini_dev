@@ -25,7 +25,9 @@ def split_field(data, field_name):
     if not field_value:
         return []
     if isinstance(field_value, str):
-
+        # Use [split] as the delimiter with optional surrounding whitespace
+        # sql_statements = [stmt.strip() for stmt in re.split(r'\[split\]\s*', field_value) if stmt.strip()]
+        # return sql_statements
         return [field_value]
     elif isinstance(field_value, list):
         return field_value
@@ -45,8 +47,8 @@ def save_report_and_status(
     big_logger,
 ):
     """
-    Writes a report to report_file_path and updates the 'status'/'error_message' fields
-    in data_list based on question_test_case_results.
+    Writes a detailed report to report_file_path and updates the 'status'/'error_message'
+    fields in data_list based on question_test_case_results.
     """
     total_instances = len(data_list)
     try:
@@ -72,7 +74,7 @@ def save_report_and_status(
             report_file.write(f"Overall Accuracy: {overall_accuracy:.2f}%\n")
             report_file.write(f"Timestamp: {timestamp}\n\n")
 
-            # Go through each question result
+            # Iterate through each question result
             for i, q_res in enumerate(question_test_case_results):
                 q_idx = q_res["instance_id"]
                 t_total = q_res["total_test_cases"]
@@ -95,9 +97,9 @@ def save_report_and_status(
                     f"failed test cases: {failed_list_str}{eval_phase_note}\n"
                 )
 
-                # Update data_list with statuses
+                # Update data_list with pass/fail status
                 if t_fail == 0:
-                    # All testcases passed, no error-phase surprises
+                    # All test cases passed; no errors during evaluation
                     data_list[i]["status"] = "success"
                     data_list[i]["error_message"] = None
                 else:
@@ -106,37 +108,44 @@ def save_report_and_status(
                         data_list[i]["error_message"] = f"{failed_list_str} failed"
                     else:
                         data_list[i]["error_message"] = eval_phase_note
-                
-                
 
-            report_file.write("\n" + "="*50 + "\n")
+            # Add statistical summary
+            report_file.write("\n" + "=" * 50 + "\n")
             report_file.write("EXECUTION STATISTICS:\n")
-            report_file.write("="*50 + "\n")
+            report_file.write("=" * 50 + "\n")
 
+            # Collect executable instances (those without syntax or execution errors)
             executable_instances = []
             executable_with_assertion_error = []
             executable_success = []
-            
+
             for q_res in question_test_case_results:
                 instance_id = q_res["instance_id"]
                 has_execution_error = q_res.get("evaluation_phase_execution_error", False)
                 has_timeout_error = q_res.get("evaluation_phase_timeout_error", False)
                 has_assertion_error = q_res.get("evaluation_phase_assertion_error", False)
 
+                # Executable instances: no execution or timeout errors
                 if not has_execution_error and not has_timeout_error:
                     executable_instances.append(instance_id)
-                    
+
                     if has_assertion_error:
                         executable_with_assertion_error.append(instance_id)
                     else:
                         executable_success.append(instance_id)
-            
 
-            report_file.write(f"Total Executable Instances (no syntax/execution errors): {len(executable_instances)}\n")
-            report_file.write(f"Executable Instances with Assertion Errors: {len(executable_with_assertion_error)}\n")
-            report_file.write(f"Executable Instances Successfully Passed: {len(executable_success)}\n\n")
-            
+            # Write execution summary
+            report_file.write(
+                f"Total Executable Instances (no syntax/execution errors): {len(executable_instances)}\n"
+            )
+            report_file.write(
+                f"Executable Instances with Assertion Errors: {len(executable_with_assertion_error)}\n"
+            )
+            report_file.write(
+                f"Executable Instances Successfully Passed: {len(executable_success)}\n\n"
+            )
 
+            # List instance IDs
             if executable_instances:
                 report_file.write("Executable Instance IDs:\n")
                 for i, instance_id in enumerate(executable_instances, 1):
@@ -147,13 +156,13 @@ def save_report_and_status(
                         report_file.write(" (Success)")
                     report_file.write("\n")
                 report_file.write("\n")
-            
+
             if executable_with_assertion_error:
                 report_file.write("Executable Instances with Assertion Errors:\n")
                 for i, instance_id in enumerate(executable_with_assertion_error, 1):
                     report_file.write(f"  {i}. {instance_id}\n")
                 report_file.write("\n")
-            
+
             if executable_success:
                 report_file.write("Executable Instances Successfully Passed:\n")
                 for i, instance_id in enumerate(executable_success, 1):

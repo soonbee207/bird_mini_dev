@@ -214,7 +214,7 @@ def evaluate_instance(data, args, logger):
         db_path = ephemeral_db_path
         logger.info(f"Using ephemeral database: {db_path}")
     else:
-        db_path = f"./database/{db_name}/{db_name}.sqlite"
+        db_path = f"/Volumes/SN770/livesql_sqlite/database/{db_name}/{db_name}.sqlite"
         logger.info(f"Using main database: {db_path}")
     
     # Get connection with retry

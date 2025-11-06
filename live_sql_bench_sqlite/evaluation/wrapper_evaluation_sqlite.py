@@ -24,7 +24,7 @@ from db_utils import create_ephemeral_db_copies, drop_ephemeral_dbs
 
 def run_single_instance(instance_data, instance_id, args, ephemeral_db_path, logger):
     """Run a single evaluation instance in a separate process"""
-    
+
     # Create temporary input file
     with tempfile.NamedTemporaryFile(mode="w", suffix=".jsonl", delete=False) as tmp:
         tmp_input = tmp.name
@@ -40,11 +40,16 @@ def run_single_instance(instance_data, instance_id, args, ephemeral_db_path, log
     cmd = [
         "python3",
         "./single_instance_eval_sqlite.py",
-        "--jsonl_file", tmp_input,
-        "--output_file", tmp_output,
-        "--mode", "gold",
-        "--logging", "false",
-        "--log_file", log_file_path,  # 添加这一行指定日志文件路径
+        "--jsonl_file",
+        tmp_input,
+        "--output_file",
+        tmp_output,
+        "--mode",
+        args.mode,
+        "--logging",
+        "false",
+        "--log_file",
+        log_file_path,  # 添加这一行指定日志文件路径
     ]
 
     # Set up environment with ephemeral database path
@@ -64,14 +69,14 @@ def run_single_instance(instance_data, instance_id, args, ephemeral_db_path, log
             timeout=180,  # 3 minute timeout per instance
             env=env,
         )
-        
+
         success = result.returncode == 0
-        
+
         if not success:
             logger.error(f"Instance {instance_id} failed with code {result.returncode}")
             if result.stderr:
                 logger.error(f"STDERR: {result.stderr[:300]}...")
-                
+
     except subprocess.TimeoutExpired:
         logger.error(f"Instance {instance_id} timed out after 180 seconds")
         success = False
@@ -89,7 +94,7 @@ def run_single_instance(instance_data, instance_id, args, ephemeral_db_path, log
                 return evaluation_result
         except Exception as e:
             logger.error(f"Error reading output for instance {instance_id}: {e}")
-    
+
     # Clean up temporary files
     try:
         os.unlink(tmp_input)
@@ -152,6 +157,7 @@ def main():
         description="Simplified wrapper script for SQLite evaluation"
     )
     parser.add_argument("--jsonl_file", required=True, help="Path to JSONL file")
+    parser.add_argument("--db_path", required=True, help="Path to database folder")
     parser.add_argument("--limit", type=int, default=None, help="Limit number of instances")
     parser.add_argument("--skip", type=int, default=0, help="Skip first N instances")
     parser.add_argument("--num_threads", type=int, default=4, help="Number of parallel threads")
@@ -164,7 +170,7 @@ def main():
     # Load and process data
     print(f"Loading data from {args.jsonl_file}...")
     data_list = load_jsonl(args.jsonl_file)
-    
+
     if not data_list:
         print("No data found in JSONL file.")
         sys.exit(1)
@@ -176,7 +182,7 @@ def main():
     if args.skip > 0:
         data_list = data_list[args.skip:]
         print(f"Skipped first {args.skip} instances")
-    
+
     if args.limit is not None:
         data_list = data_list[:args.limit]
         print(f"Limited to {args.limit} instances")
@@ -196,7 +202,7 @@ def main():
     base_output_folder = os.path.splitext(args.jsonl_file)[0]
     log_filename = f"{base_output_folder}_simple_wrapper.log"
     logger = configure_logger(log_filename)
-    
+
     logger.info("=== Starting Simple SQLite Evaluation Wrapper ===")
     logger.info(f"Processing {final_count} instances")
     logger.info(f"Batch size: {args.batch_size}")
@@ -206,6 +212,7 @@ def main():
     print("Creating ephemeral database copies...")
     try:
         ephemeral_db_pool_dict = create_ephemeral_db_copies(
+            db_path=args.db_path,
             base_db_names=all_db_names,
             num_copies=args.num_threads,
             pg_password="123123",
@@ -233,9 +240,9 @@ def main():
 
     # Process batches
     all_results = []
-    
+
     with tqdm(total=final_count, desc="Processing instances", unit="instance") as pbar:
-        
+
         if args.num_threads == 1:
             # Single-threaded processing
             for batch_idx, batch in enumerate(batches):
@@ -243,10 +250,10 @@ def main():
                 batch_results = process_instances_batch(batch, ephemeral_db_pool_dict, args, logger)
                 all_results.extend(batch_results)
                 pbar.update(len(batch))
-                
+
                 # Force garbage collection
                 gc.collect()
-        
+
         else:
             # Multi-threaded processing
             with concurrent.futures.ThreadPoolExecutor(max_workers=args.num_threads) as executor:
@@ -255,7 +262,7 @@ def main():
                 for batch_idx, batch in enumerate(batches):
                     future = executor.submit(process_instances_batch, batch, ephemeral_db_pool_dict, args, logger)
                     future_to_batch[future] = batch_idx
-                
+
                 # Process completed batches
                 for future in concurrent.futures.as_completed(future_to_batch):
                     batch_idx = future_to_batch[future]
@@ -282,7 +289,7 @@ def main():
                             }
                             all_results.append(error_result)
                         pbar.update(len(batch))
-                    
+
                     # Force garbage collection
                     gc.collect()
 
@@ -293,11 +300,11 @@ def main():
     total_instances = len(all_results)
     passed_instances = sum(1 for r in all_results if r["status"] == "success")
     failed_instances = total_instances - passed_instances
-    
+
     execution_errors = sum(1 for r in all_results if r.get("evaluation_phase_execution_error", False))
     timeout_errors = sum(1 for r in all_results if r.get("evaluation_phase_timeout_error", False))
     assertion_errors = sum(1 for r in all_results if r.get("evaluation_phase_assertion_error", False))
-    
+
     overall_accuracy = (passed_instances / total_instances * 100) if total_instances > 0 else 0.0
 
     # Print summary
@@ -316,7 +323,7 @@ def main():
     # Save results
     timestamp = datetime.now().isoformat(sep=" ", timespec="microseconds")
     report_file_path = f"{base_output_folder}_simple_report.txt"
-    
+
     try:
         save_report_and_status(
             report_file_path, all_results, data_list,

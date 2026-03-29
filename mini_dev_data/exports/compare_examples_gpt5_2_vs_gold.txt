@@ -1,0 +1,1025 @@
+==========================================================================================
+Example 1 | idx=5 | db_id=debit_card_specializing | difficulty=moderate | kind=result_mismatch
+------------------------------------------------------------------------------------------
+QUESTION:
+What was the gas consumption peak month for SME customers in 2013?
+
+PROMPT (reconstructed from code):
+CREATE TABLE customers
+(
+    CustomerID INTEGER UNIQUE     not null
+        primary key,
+    Segment    TEXT null,
+    Currency   TEXT null
+)
+
+CREATE TABLE gasstations
+(
+    GasStationID INTEGER    UNIQUE   not null
+        primary key,
+    ChainID      INTEGER          null,
+    Country      TEXT null,
+    Segment      TEXT null
+)
+
+CREATE TABLE products
+(
+    ProductID   INTEGER   UNIQUE      not null
+        primary key,
+    Description TEXT null
+)
+
+CREATE TABLE "transactions_1k"
+(
+    TransactionID INTEGER
+        primary key autoincrement,
+    Date          DATE,
+    Time          TEXT,
+    CustomerID    INTEGER,
+    CardID        INTEGER,
+    GasStationID  INTEGER,
+    ProductID     INTEGER,
+    Amount        INTEGER,
+    Price         REAL
+)
+
+CREATE TABLE sqlite_sequence(name,seq)
+
+CREATE TABLE "yearmonth"
+(
+    CustomerID  INTEGER not null
+        references customers
+            on update cascade on delete cascade
+        references customers,
+    Date        TEXT    not null,
+    Consumption REAL,
+    primary key (Date, CustomerID)
+)
+
+-- Using valid SQLite and understanding External Knowledge, answer the following questions for the tables provided above.
+-- What was the gas consumption peak month for SME customers in 2013?
+-- External Knowledge: Year 2013 can be presented as Between 201301 And 201312; The first 4 strings of the Date values in the yearmonth table can represent year; The 5th and 6th string of the date can refer to month.
+
+
+Generate the SQLite for the above question after thinking step by step: 
+
+
+        
+In your response, you do not need to mention your intermediate steps. 
+        Do not include any comments in your response.
+        Do not need to start with the symbol ```
+        You only need to return the result SQLite SQL code
+        start from SELECT
+        
+
+GOLD SQL:
+SELECT SUBSTR(T2.Date, 5, 2) FROM customers AS T1 INNER JOIN yearmonth AS T2 ON T1.CustomerID = T2.CustomerID WHERE SUBSTR(T2.Date, 1, 4) = '2013' AND T1.Segment = 'SME' GROUP BY SUBSTR(T2.Date, 5, 2) ORDER BY SUM(T2.Consumption) DESC LIMIT 1
+
+PREDICTED SQL (GPT-5.2 output, stripped):
+SELECT ym.Date AS PeakMonth
+FROM yearmonth ym
+JOIN customers c ON c.CustomerID = ym.CustomerID
+WHERE c.Segment = 'SME'
+  AND ym.Date BETWEEN '201301' AND '201312'
+ORDER BY ym.Consumption DESC
+LIMIT 1
+
+EXECUTION COMPARISON:
+Pred result rows (count): 1
+Gold result rows (count): 1
+Pred sample rows: [('201304',)]
+Gold sample rows: [('04',)]
+
+TEXT DIFF (normalized whitespace):
+--- 
++++ 
+@@ -1,36 +1,28 @@
+ SELECT
+-SUBSTR(T2.Date,
+-5,
+-2)
++ym.Date
++AS
++PeakMonth
+ FROM
++yearmonth
++ym
++JOIN
+ customers
+-AS
+-T1
+-INNER
+-JOIN
+-yearmonth
+-AS
+-T2
++c
+ ON
+-T1.CustomerID
++c.CustomerID
+ =
+-T2.CustomerID
++ym.CustomerID
+ WHERE
+-SUBSTR(T2.Date,
+-1,
+-4)
+-=
+-'2013'
+-AND
+-T1.Segment
++c.Segment
+ =
+ 'SME'
+-GROUP
+-BY
+-SUBSTR(T2.Date,
+-5,
+-2)
++AND
++ym.Date
++BETWEEN
++'201301'
++AND
++'201312'
+ ORDER
+ BY
+-SUM(T2.Consumption)
++ym.Consumption
+ DESC
+==========================================================================================
+Example 2 | idx=6 | db_id=debit_card_specializing | difficulty=challenging | kind=result_mismatch
+------------------------------------------------------------------------------------------
+QUESTION:
+What is the difference in the annual average consumption of the customers with the least amount of consumption paid in CZK for 2013 between SME and LAM, LAM and KAM, and KAM and SME?
+
+PROMPT (reconstructed from code):
+CREATE TABLE customers
+(
+    CustomerID INTEGER UNIQUE     not null
+        primary key,
+    Segment    TEXT null,
+    Currency   TEXT null
+)
+
+CREATE TABLE gasstations
+(
+    GasStationID INTEGER    UNIQUE   not null
+        primary key,
+    ChainID      INTEGER          null,
+    Country      TEXT null,
+    Segment      TEXT null
+)
+
+CREATE TABLE products
+(
+    ProductID   INTEGER   UNIQUE      not null
+        primary key,
+    Description TEXT null
+)
+
+CREATE TABLE "transactions_1k"
+(
+    TransactionID INTEGER
+        primary key autoincrement,
+    Date          DATE,
+    Time          TEXT,
+    CustomerID    INTEGER,
+    CardID        INTEGER,
+    GasStationID  INTEGER,
+    ProductID     INTEGER,
+    Amount        INTEGER,
+    Price         REAL
+)
+
+CREATE TABLE sqlite_sequence(name,seq)
+
+CREATE TABLE "yearmonth"
+(
+    CustomerID  INTEGER not null
+        references customers
+            on update cascade on delete cascade
+        references customers,
+    Date        TEXT    not null,
+    Consumption REAL,
+    primary key (Date, CustomerID)
+)
+
+-- Using valid SQLite and understanding External Knowledge, answer the following questions for the tables provided above.
+-- What is the difference in the annual average consumption of the customers with the least amount of consumption paid in CZK for 2013 between SME and LAM, LAM and KAM, and KAM and SME?
+-- External Knowledge: annual average consumption of customer with the lowest consumption in each segment = total consumption per year / the number of customer with lowest consumption in each segment; Difference in annual average = SME's annual average - LAM's annual average; Difference in annual average = LAM's annual average - KAM's annual average; Year 2013 can be presented as Between 201301 And 201312; The first 4 strings of the Date values in the yearmonth table can represent year.
+
+
+Generate the SQLite for the above question after thinking step by step: 
+
+
+        
+In your response, you do not need to mention your intermediate steps. 
+        Do not include any comments in your response.
+        Do not need to start with the symbol ```
+        You only need to return the result SQLite SQL code
+        start from SELECT
+        
+
+GOLD SQL:
+SELECT CAST(SUM(IIF(T1.Segment = 'SME', T2.Consumption, 0)) AS REAL) / COUNT(T1.CustomerID) - CAST(SUM(IIF(T1.Segment = 'LAM', T2.Consumption, 0)) AS REAL) / COUNT(T1.CustomerID) , CAST(SUM(IIF(T1.Segment = 'LAM', T2.Consumption, 0)) AS REAL) / COUNT(T1.CustomerID) - CAST(SUM(IIF(T1.Segment = 'KAM', T2.Consumption, 0)) AS REAL) / COUNT(T1.CustomerID) , CAST(SUM(IIF(T1.Segment = 'KAM', T2.Consumption, 0)) AS REAL) / COUNT(T1.CustomerID) - CAST(SUM(IIF(T1.Segment = 'SME', T2.Consumption, 0)) AS REAL) / COUNT(T1.CustomerID) FROM customers AS T1 INNER JOIN yearmonth AS T2 ON T1.CustomerID = T2.CustomerID WHERE T1.Currency = 'CZK' AND T2.Consumption = ( SELECT MIN(Consumption) FROM yearmonth ) AND T2.Date BETWEEN 201301 AND 201312
+
+PREDICTED SQL (GPT-5.2 output, stripped):
+SELECT
+  sme.avg_lowest_consumption - lam.avg_lowest_consumption AS diff_sme_lam,
+  lam.avg_lowest_consumption - kam.avg_lowest_consumption AS diff_lam_kam,
+  kam.avg_lowest_consumption - sme.avg_lowest_consumption AS diff_kam_sme
+FROM
+  (
+    WITH yearly AS (
+      SELECT
+        c.Segment,
+        ym.CustomerID,
+        SUM(ym.Consumption) AS total_consumption_2013
+      FROM yearmonth ym
+      JOIN customers c ON c.CustomerID = ym.CustomerID
+      WHERE ym.Date BETWEEN '201301' AND '201312'
+      GROUP BY c.Segment, ym.CustomerID
+    ),
+    mins AS (
+      SELECT Segment, MIN(total_consumption_2013) AS min_total
+      FROM yearly
+      GROUP BY Segment
+    ),
+    lowest AS (
+      SELECT y.Segment, y.CustomerID, y.total_consumption_2013
+      FROM yearly y
+      JOIN mins m
+        ON m.Segment = y.Segment
+       AND m.min_total = y.total_consumption_2013
+    )
+    SELECT
+      Segment,
+      SUM(total_consumption_2013) * 1.0 / COUNT(*) AS avg_lowest_consumption
+    FROM lowest
+    GROUP BY Segment
+  ) AS all_avgs
+JOIN (
+  SELECT avg_lowest_consumption
+  FROM (
+    WITH yearly AS (
+      SELECT
+        c.Segment,
+        ym.CustomerID,
+        SUM(ym.Consumption) AS total_consumption_2013
+      FROM yearmonth ym
+      JOIN customers c ON c.CustomerID = ym.CustomerID
+      WHERE ym.Date BETWEEN '201301' AND '201312'
+      GROUP BY c.Segment, ym.CustomerID
+    ),
+    mins AS (
+      SELECT Segment, MIN(total_consumption_2013) AS min_total
+      FROM yearly
+      GROUP BY Segment
+    ),
+    lowest AS (
+      SELECT y.Segment, y.CustomerID, y.total_consumption_2013
+      FROM yearly y
+      JOIN mins m
+        ON m.Segment = y.Segment
+       AND m.min_total = y.total_consumption_2013
+    )
+    SELECT
+      Segment,
+      SUM(total_consumption_2013) * 1.0 / COUNT(*) AS avg_lowest_consumption
+    FROM lowest
+    GROUP BY Segment
+  )
+  WHERE Segment = 'SME'
+) AS sme
+JOIN (
+  SELECT avg_lowest_consumption
+  FROM (
+    WITH yearly AS (
+      SELECT
+        c.Segment,
+        ym.CustomerID,
+        SUM(ym.Consumption) AS total_consumption_2013
+      FROM yearmonth ym
+      JOIN customers c ON c.CustomerID = ym.CustomerID
+      WHERE ym.Date BETWEEN '201301' AND '201312'
+      GROUP BY c.Segment, ym.CustomerID
+    ),
+    mins AS (
+      SELECT Segment, MIN(total_consumption_2013) AS min_total
+      FROM yearly
+      GROUP BY Segment
+    ),
+    lowest AS (
+      SELECT y.Segment, y.CustomerID, y.total_consumption_2013
+      FROM yearly y
+      JOIN mins m
+        ON m.Segment = y.Segment
+       AND m.min_total = y.total_consumption_2013
+    )
+    SELECT
+      Segment,
+      SUM(total_consumption_2013) * 1.0 / COUNT(*) AS avg_lowest_consumption
+    FROM lowest
+    GROUP BY Segment
+  )
+  WHERE Segment = 'LAM'
+) AS lam
+JOIN (
+  SELECT avg_lowest_consumption
+  FROM (
+    WITH yearly AS (
+      SELECT
+        c.Segment,
+        ym.CustomerID,
+        SUM(ym.Consumption) AS total_consumption_2013
+      FROM yearmonth ym
+      JOIN customers c ON c.CustomerID = ym.CustomerID
+      WHERE ym.Date BETWEEN '201301' AND '201312'
+      GROUP BY c.Segment, ym.CustomerID
+    ),
+    mins AS (
+      SELECT Segment, MIN(total_consumption_2013) AS min_total
+      FROM yearly
+      GROUP BY Segment
+    ),
+    lowest AS (
+      SELECT y.Segment, y.CustomerID, y.total_consumption_2013
+      FROM yearly y
+      JOIN mins m
+        ON m.Segment = y.Segment
+       AND m.min_total = y.total_consumption_2013
+    )
+    SELECT
+      Segment,
+      SUM(total_consumption_2013) * 1.0 / COUNT(*) AS avg_lowest_consumption
+    FROM lowest
+    GROUP BY Segment
+  )
+  WHERE Segment = 'KAM'
+) AS kam
+LIMIT 1;
+
+EXECUTION COMPARISON:
+Pred result rows (count): 1
+Gold result rows (count): 1
+Pred sample rows: [(-13820.919999999998, 5858.199999999999, 7962.719999999999)]
+Gold sample rows: [(0.0, 582092.86, -582092.86)]
+
+TEXT DIFF (normalized whitespace):
+--- 
++++ 
+@@ -1,92 +1,389 @@
+ SELECT
+-CAST(SUM(IIF(T1.Segment
+-=
+-'SME',
+-T2.Consumption,
+-0))
+-AS
+-REAL)
++sme.avg_lowest_consumption
++-
++lam.avg_lowest_consumption
++AS
++diff_sme_lam,
++lam.avg_lowest_consumption
++-
++kam.avg_lowest_consumption
++AS
++diff_lam_kam,
++kam.avg_lowest_consumption
++-
++sme.avg_lowest_consumption
++AS
++diff_kam_sme
++FROM
++(
++WITH
++yearly
++AS
++(
++SELECT
++c.Segment,
++ym.CustomerID,
++SUM(ym.Consumption)
++AS
++total_consumption_2013
++FROM
++yearmonth
++ym
++JOIN
++customers
++c
++ON
++c.CustomerID
++=
++ym.CustomerID
++WHERE
++ym.Date
++BETWEEN
++'201301'
++AND
++'201312'
++GROUP
++BY
++c.Segment,
++ym.CustomerID
++),
++mins
++AS
++(
++SELECT
++Segment,
++MIN(total_consumption_2013)
++AS
++min_total
++FROM
++yearly
++GROUP
++BY
++Segment
++),
++lowest
++AS
++(
++SELECT
++y.Segment,
++y.CustomerID,
++y.total_consumption_2013
++FROM
++yearly
++y
++JOIN
++mins
++m
++ON
++m.Segment
++=
++y.Segment
++AND
++m.min_total
++=
++y.total_consumption_2013
++)
++SELECT
++Segment,
++SUM(total_consumption_2013)
++*
++1.0
+ /
+-COUNT(T1.CustomerID)
+--
+-CAST(SUM(IIF(T1.Segment
+-=
+-'LAM',
+-T2.Consumption,
+-0))
+-AS
+-REAL)
++COUNT(*)
++AS
++avg_lowest_consumption
++FROM
++lowest
++GROUP
++BY
++Segment
++)
++AS
+...[diff truncated]...
+==========================================================================================
+Example 3 | idx=7 | db_id=debit_card_specializing | difficulty=challenging | kind=result_mismatch
+------------------------------------------------------------------------------------------
+QUESTION:
+Which of the three segments—SME, LAM and KAM—has the biggest and lowest percentage increases in consumption paid in EUR between 2012 and 2013?
+
+PROMPT (reconstructed from code):
+CREATE TABLE customers
+(
+    CustomerID INTEGER UNIQUE     not null
+        primary key,
+    Segment    TEXT null,
+    Currency   TEXT null
+)
+
+CREATE TABLE gasstations
+(
+    GasStationID INTEGER    UNIQUE   not null
+        primary key,
+    ChainID      INTEGER          null,
+    Country      TEXT null,
+    Segment      TEXT null
+)
+
+CREATE TABLE products
+(
+    ProductID   INTEGER   UNIQUE      not null
+        primary key,
+    Description TEXT null
+)
+
+CREATE TABLE "transactions_1k"
+(
+    TransactionID INTEGER
+        primary key autoincrement,
+    Date          DATE,
+    Time          TEXT,
+    CustomerID    INTEGER,
+    CardID        INTEGER,
+    GasStationID  INTEGER,
+    ProductID     INTEGER,
+    Amount        INTEGER,
+    Price         REAL
+)
+
+CREATE TABLE sqlite_sequence(name,seq)
+
+CREATE TABLE "yearmonth"
+(
+    CustomerID  INTEGER not null
+        references customers
+            on update cascade on delete cascade
+        references customers,
+    Date        TEXT    not null,
+    Consumption REAL,
+    primary key (Date, CustomerID)
+)
+
+-- Using valid SQLite and understanding External Knowledge, answer the following questions for the tables provided above.
+-- Which of the three segments—SME, LAM and KAM—has the biggest and lowest percentage increases in consumption paid in EUR between 2012 and 2013?
+-- External Knowledge: Increase or Decrease = consumption for 2013 - consumption for 2012; Percentage of Increase = (Increase or Decrease / consumption for 2013) * 100%; The first 4 strings of the Date values in the yearmonth table can represent year
+
+
+Generate the SQLite for the above question after thinking step by step: 
+
+
+        
+In your response, you do not need to mention your intermediate steps. 
+        Do not include any comments in your response.
+        Do not need to start with the symbol ```
+        You only need to return the result SQLite SQL code
+        start from SELECT
+        
+
+GOLD SQL:
+SELECT CAST((SUM(IIF(T1.Segment = 'SME' AND T2.Date LIKE '2013%', T2.Consumption, 0)) - SUM(IIF(T1.Segment = 'SME' AND T2.Date LIKE '2012%', T2.Consumption, 0))) AS FLOAT) * 100 / SUM(IIF(T1.Segment = 'SME' AND T2.Date LIKE '2012%', T2.Consumption, 0)), CAST(SUM(IIF(T1.Segment = 'LAM' AND T2.Date LIKE '2013%', T2.Consumption, 0)) - SUM(IIF(T1.Segment = 'LAM' AND T2.Date LIKE '2012%', T2.Consumption, 0)) AS FLOAT) * 100 / SUM(IIF(T1.Segment = 'LAM' AND T2.Date LIKE '2012%', T2.Consumption, 0)) , CAST(SUM(IIF(T1.Segment = 'KAM' AND T2.Date LIKE '2013%', T2.Consumption, 0)) - SUM(IIF(T1.Segment = 'KAM' AND T2.Date LIKE '2012%', T2.Consumption, 0)) AS FLOAT) * 100 / SUM(IIF(T1.Segment = 'KAM' AND T2.Date LIKE '2012%', T2.Consumption, 0)) FROM customers AS T1 INNER JOIN yearmonth AS T2 ON T1.CustomerID = T2.CustomerID
+
+PREDICTED SQL (GPT-5.2 output, stripped):
+SELECT
+  Segment,
+  pct_increase
+FROM (
+  SELECT
+    c.Segment,
+    ((y2013.consumption_2013 - y2012.consumption_2012) / y2013.consumption_2013) * 100.0 AS pct_increase,
+    RANK() OVER (ORDER BY ((y2013.consumption_2013 - y2012.consumption_2012) / y2013.consumption_2013) * 100.0 DESC) AS r_biggest,
+    RANK() OVER (ORDER BY ((y2013.consumption_2013 - y2012.consumption_2012) / y2013.consumption_2013) * 100.0 ASC) AS r_lowest
+  FROM customers c
+  JOIN (
+    SELECT
+      ym.CustomerID,
+      SUM(ym.Consumption) AS consumption_2012
+    FROM yearmonth ym
+    WHERE substr(ym.Date, 1, 4) = '2012'
+    GROUP BY ym.CustomerID
+  ) y2012 ON y2012.CustomerID = c.CustomerID
+  JOIN (
+    SELECT
+      ym.CustomerID,
+      SUM(ym.Consumption) AS consumption_2013
+    FROM yearmonth ym
+    WHERE substr(ym.Date, 1, 4) = '2013'
+    GROUP BY ym.CustomerID
+  ) y2013 ON y2013.CustomerID = c.CustomerID
+  WHERE c.Currency = 'EUR'
+    AND c.Segment IN ('SME','LAM','KAM')
+    AND y2013.consumption_2013 IS NOT NULL
+    AND y2013.consumption_2013 <> 0
+  GROUP BY c.Segment
+)
+WHERE r_biggest = 1 OR r_lowest = 1
+ORDER BY r_biggest, r_lowest;
+
+EXECUTION COMPARISON:
+Pred result rows (count): 2
+Gold result rows (count): 1
+Pred sample rows: [('SME', 96.46837916081414), ('KAM', 38.45641487233095)]
+Gold sample rows: [(545.4018999790969, 681.5824574939339, 708.1124062978664)]
+
+TEXT DIFF (normalized whitespace):
+--- 
++++ 
+@@ -1,114 +1,130 @@
+ SELECT
+-CAST((SUM(IIF(T1.Segment
+-=
+-'SME'
+-AND
+-T2.Date
+-LIKE
+-'2013%',
+-T2.Consumption,
+-0))
++Segment,
++pct_increase
++FROM
++(
++SELECT
++c.Segment,
++((y2013.consumption_2013
+ -
+-SUM(IIF(T1.Segment
+-=
+-'SME'
+-AND
+-T2.Date
+-LIKE
+-'2012%',
+-T2.Consumption,
+-0)))
++y2012.consumption_2012)
++/
++y2013.consumption_2013)
++*
++100.0
+ AS
+-FLOAT)
++pct_increase,
++RANK()
++OVER
++(ORDER
++BY
++((y2013.consumption_2013
++-
++y2012.consumption_2012)
++/
++y2013.consumption_2013)
+ *
+-100
++100.0
++DESC)
++AS
++r_biggest,
++RANK()
++OVER
++(ORDER
++BY
++((y2013.consumption_2013
++-
++y2012.consumption_2012)
+ /
+-SUM(IIF(T1.Segment
+-=
+-'SME'
+-AND
+-T2.Date
+-LIKE
+-'2012%',
+-T2.Consumption,
+-0)),
+-CAST(SUM(IIF(T1.Segment
+-=
+-'LAM'
+-AND
+-T2.Date
+-LIKE
+-'2013%',
+-T2.Consumption,
+-0))
+--
+-SUM(IIF(T1.Segment
+-=
+-'LAM'
+-AND
+-T2.Date
+-LIKE
+-'2012%',
+-T2.Consumption,
+-0))
++y2013.consumption_2013)
++*
++100.0
++ASC)
+ AS
+-FLOAT)
+-*
+-100
+-/
+-SUM(IIF(T1.Segment
+-=
+-'LAM'
+-AND
+-T2.Date
+-LIKE
+-'2012%',
+-T2.Consumption,
+-0))
+-,
+-CAST(SUM(IIF(T1.Segment
+-=
+-'KAM'
+-AND
+-T2.Date
+-LIKE
+-'2013%',
+-T2.Consumption,
+-0))
+--
+-SUM(IIF(T1.Segment
+-=
+...[diff truncated]...
+==========================================================================================
+Example 4 | idx=9 | db_id=debit_card_specializing | difficulty=simple | kind=result_mismatch
+------------------------------------------------------------------------------------------
+QUESTION:
+How many more "discount" gas stations does the Czech Republic have compared to Slovakia?
+
+PROMPT (reconstructed from code):
+CREATE TABLE customers
+(
+    CustomerID INTEGER UNIQUE     not null
+        primary key,
+    Segment    TEXT null,
+    Currency   TEXT null
+)
+
+CREATE TABLE gasstations
+(
+    GasStationID INTEGER    UNIQUE   not null
+        primary key,
+    ChainID      INTEGER          null,
+    Country      TEXT null,
+    Segment      TEXT null
+)
+
+CREATE TABLE products
+(
+    ProductID   INTEGER   UNIQUE      not null
+        primary key,
+    Description TEXT null
+)
+
+CREATE TABLE "transactions_1k"
+(
+    TransactionID INTEGER
+        primary key autoincrement,
+    Date          DATE,
+    Time          TEXT,
+    CustomerID    INTEGER,
+    CardID        INTEGER,
+    GasStationID  INTEGER,
+    ProductID     INTEGER,
+    Amount        INTEGER,
+    Price         REAL
+)
+
+CREATE TABLE sqlite_sequence(name,seq)
+
+CREATE TABLE "yearmonth"
+(
+    CustomerID  INTEGER not null
+        references customers
+            on update cascade on delete cascade
+        references customers,
+    Date        TEXT    not null,
+    Consumption REAL,
+    primary key (Date, CustomerID)
+)
+
+-- Using valid SQLite and understanding External Knowledge, answer the following questions for the tables provided above.
+-- How many more "discount" gas stations does the Czech Republic have compared to Slovakia?
+-- External Knowledge: Czech Republic can be represented as the Country value in gasstations table is 'CZE'; Slovakia can be represented as the Country value in the gasstations table is 'SVK';  Computation of more "discount" gas stations= Total no. of discount gas stations in Czech Republic - Total no. of discount gas stations in Slovakia
+
+
+Generate the SQLite for the above question after thinking step by step: 
+
+
+        
+In your response, you do not need to mention your intermediate steps. 
+        Do not include any comments in your response.
+        Do not need to start with the symbol ```
+        You only need to return the result SQLite SQL code
+        start from SELECT
+        
+
+GOLD SQL:
+SELECT SUM(IIF(Country = 'CZE', 1, 0)) - SUM(IIF(Country = 'SVK', 1, 0)) FROM gasstations WHERE Segment = 'Discount'
+
+PREDICTED SQL (GPT-5.2 output, stripped):
+SELECT
+  SUM(CASE WHEN Country = 'CZE' AND Segment = 'discount' THEN 1 ELSE 0 END) -
+  SUM(CASE WHEN Country = 'SVK' AND Segment = 'discount' THEN 1 ELSE 0 END) AS discount_station_difference
+FROM gasstations;
+
+EXECUTION COMPARISON:
+Pred result rows (count): 1
+Gold result rows (count): 1
+Pred sample rows: [(0,)]
+Gold sample rows: [(176,)]
+
+TEXT DIFF (normalized whitespace):
+--- 
++++ 
+@@ -1,18 +1,34 @@
+ SELECT
+-SUM(IIF(Country
++SUM(CASE
++WHEN
++Country
+ =
+-'CZE',
+-1,
+-0))
+--
+-SUM(IIF(Country
+-=
+-'SVK',
+-1,
+-0))
+-FROM
+-gasstations
+-WHERE
++'CZE'
++AND
+ Segment
+ =
+-'Discount'
++'discount'
++THEN
++1
++ELSE
++0
++END)
++-
++SUM(CASE
++WHEN
++Country
++=
++'SVK'
++AND
++Segment
++=
++'discount'
++THEN
++1
++ELSE
++0
++END)
++AS
++discount_station_difference
++FROM
++gasstations;
+==========================================================================================
+Example 5 | idx=10 | db_id=debit_card_specializing | difficulty=simple | kind=result_mismatch
+------------------------------------------------------------------------------------------
+QUESTION:
+Is it true that more SMEs pay in Czech koruna than in euros? If so, how many more?
+
+PROMPT (reconstructed from code):
+CREATE TABLE customers
+(
+    CustomerID INTEGER UNIQUE     not null
+        primary key,
+    Segment    TEXT null,
+    Currency   TEXT null
+)
+
+CREATE TABLE gasstations
+(
+    GasStationID INTEGER    UNIQUE   not null
+        primary key,
+    ChainID      INTEGER          null,
+    Country      TEXT null,
+    Segment      TEXT null
+)
+
+CREATE TABLE products
+(
+    ProductID   INTEGER   UNIQUE      not null
+        primary key,
+    Description TEXT null
+)
+
+CREATE TABLE "transactions_1k"
+(
+    TransactionID INTEGER
+        primary key autoincrement,
+    Date          DATE,
+    Time          TEXT,
+    CustomerID    INTEGER,
+    CardID        INTEGER,
+    GasStationID  INTEGER,
+    ProductID     INTEGER,
+    Amount        INTEGER,
+    Price         REAL
+)
+
+CREATE TABLE sqlite_sequence(name,seq)
+
+CREATE TABLE "yearmonth"
+(
+    CustomerID  INTEGER not null
+        references customers
+            on update cascade on delete cascade
+        references customers,
+    Date        TEXT    not null,
+    Consumption REAL,
+    primary key (Date, CustomerID)
+)
+
+-- Using valid SQLite and understanding External Knowledge, answer the following questions for the tables provided above.
+-- Is it true that more SMEs pay in Czech koruna than in euros? If so, how many more?
+-- External Knowledge: Amount of more SMEs = Total of SMEs pay using Currency CZK - Total of SMEs pay using Currency EUR
+
+
+Generate the SQLite for the above question after thinking step by step: 
+
+
+        
+In your response, you do not need to mention your intermediate steps. 
+        Do not include any comments in your response.
+        Do not need to start with the symbol ```
+        You only need to return the result SQLite SQL code
+        start from SELECT
+        
+
+GOLD SQL:
+SELECT SUM(Currency = 'CZK') - SUM(Currency = 'EUR') FROM customers WHERE Segment = 'SME'
+
+PREDICTED SQL (GPT-5.2 output, stripped):
+SELECT
+  CASE WHEN czk_count > eur_count THEN 1 ELSE 0 END AS is_true,
+  (czk_count - eur_count) AS how_many_more
+FROM (
+  SELECT
+    SUM(CASE WHEN Currency = 'CZK' THEN 1 ELSE 0 END) AS czk_count,
+    SUM(CASE WHEN Currency = 'EUR' THEN 1 ELSE 0 END) AS eur_count
+  FROM customers
+  WHERE Segment = 'SME'
+);
+
+EXECUTION COMPARISON:
+Pred result rows (count): 1
+Gold result rows (count): 1
+Pred sample rows: [(1, 23505)]
+Gold sample rows: [(23505,)]
+
+TEXT DIFF (normalized whitespace):
+--- 
++++ 
+@@ -1,9 +1,46 @@
+ SELECT
+-SUM(Currency
++CASE
++WHEN
++czk_count
++>
++eur_count
++THEN
++1
++ELSE
++0
++END
++AS
++is_true,
++(czk_count
++-
++eur_count)
++AS
++how_many_more
++FROM
++(
++SELECT
++SUM(CASE
++WHEN
++Currency
+ =
+-'CZK')
+--
+-SUM(Currency
++'CZK'
++THEN
++1
++ELSE
++0
++END)
++AS
++czk_count,
++SUM(CASE
++WHEN
++Currency
+ =
+-'EUR')
++'EUR'
++THEN
++1
++ELSE
++0
++END)
++AS
++eur_count
+ FROM
+@@ -14 +51,2 @@
+ 'SME'
++);

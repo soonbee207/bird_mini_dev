@@ -1,0 +1,580 @@
+==========================================================================================
+Example 1 | idx=70 | db_id=student_club | difficulty=simple | kind=result_mismatch
+------------------------------------------------------------------------------------------
+QUESTION:
+State the category of events were held at MU 215.
+
+PROMPT (truncated):
+CREATE TABLE event
+(
+    event_id   TEXT
+        constraint event_pk
+            primary key,
+    event_name TEXT,
+    event_date TEXT,
+    type       TEXT,
+    notes      TEXT,
+    location   TEXT,
+    status     TEXT
+)
+
+CREATE TABLE major
+(
+    major_id   TEXT
+        constraint major_pk
+            primary key,
+    major_name TEXT,
+    department TEXT,
+    college    TEXT
+)
+
+CREATE TABLE zip_code
+(
+    zip_code    INTEGER
+        constraint zip_code_pk
+            primary key,
+    type        TEXT,
+    city        TEXT,
+    county      TEXT,
+    state       TEXT,
+    short_state TEXT
+)
+
+CREATE TABLE "attendance"
+(
+    link_to_event  TEXT,
+    link_to_member TEXT,
+    primary key (link_to_event, link_to_member),
+    foreign key (link_to_event) references event(event_id),
+    foreign key (link_to_member) references member(member_id)
+)
+
+CREATE TABLE "budget"
+(
+    budget_id     TEXT
+            primary key,
+    category      TEXT,
+    spent         REAL,
+    remaining     REAL,
+    amount        INTEGER,
+    event_status  TEXT,
+    link_to_event TEXT,
+    foreign key (link_to_event) references event(event_id)
+)
+
+CREATE TABLE "expense"
+(
+    expense_id          TEXT
+            primary key,
+    expense_description TEXT,
+    expense_date        TEXT,
+    cost                REAL,
+    approved            TEXT,
+    link_to_member      TEXT,
+    link_to_budget      TEXT,
+    foreign key (link_to_budget) references budget(budget_id),
+    foreign key (link_to_member) references member(member_id)
+)
+
+CREATE TABLE "income"
+(
+    income_id      TEXT
+        constraint income_pk
+            primary key,
+    date_received  TEXT,
+    amount         INTEGER,
+    source         TEXT,
+    notes          TEXT,
+    link_to_member TEXT,
+    foreign key (link_to_member) references member(member_id)
+)
+
+CREATE TABLE "member"
+(
+    member_id     TEXT
+        constraint member_pk
+            primary key,
+    first_name    TEXT,
+    last_name     TEXT,
+    email         TEXT,
+    position      TEXT,
+    t_shirt_size  TEXT,
+    phone         TEXT,
+    zip           INTEGER,
+    link_to_major TEXT,
+    foreign key (link_to_major) references major(major_id),
+    foreign key (zip) references zip_code(zip_code)
+)
+
+-- Using valid SQLite and understanding External Knowledge, answer the following questions for the tables provided above.
+-- State the category of events were held at MU 215.
+-- External Knowledge: 'MU 215' is the location of event; 
+
+
+Generate the SQLite for the above question after thinking step by step: 
+
+
+        
+In your response, you do not need to mention your intermediate steps. 
+        Do not include any comments in your response.
+        Do not need to start with the symbol ```
+        You only need to return the result SQLite SQL code
+        start from SELECT
+        
+
+GOLD SQL:
+SELECT DISTINCT T2.category FROM event AS T1 INNER JOIN budget AS T2 ON T1.event_id = T2.link_to_event WHERE T1.location = 'MU 215'
+
+PREDICTED SQL:
+SELECT DISTINCT type
+FROM event
+WHERE location = 'MU 215';
+
+Pred result rows (count): 3
+Gold result rows (count): 4
+Pred sample: [('Meeting',), ('Election',), ('Guest Speaker',)]
+Gold sample: [('Advertisement',), ('Food',), ('Speaker Gifts',), ('Parking',)]
+==========================================================================================
+Example 2 | idx=116 | db_id=thrombosis_prediction | difficulty=simple | kind=result_mismatch
+------------------------------------------------------------------------------------------
+QUESTION:
+How many patients with an Ig G higher than normal?
+
+PROMPT (truncated):
+CREATE TABLE Examination
+(
+    ID                 INTEGER          null,
+    `Examination Date` DATE         null,
+    `aCL IgG`          REAL        null,
+    `aCL IgM`          REAL        null,
+    ANA                INTEGER          null,
+    `ANA Pattern`      TEXT null,
+    `aCL IgA`          INTEGER          null,
+    Diagnosis          TEXT null,
+    KCT                TEXT null,
+    RVVT              TEXT null,
+    LAC                TEXT null,
+    Symptoms           TEXT null,
+    Thrombosis         INTEGER          null,
+    foreign key (ID) references Patient (ID)
+            on update cascade on delete cascade
+)
+
+CREATE TABLE Patient
+(
+    ID           INTEGER default 0 not null
+        primary key,
+    SEX          TEXT  null,
+    Birthday     DATE          null,
+    Description  DATE          null,
+    `First Date` DATE          null,
+    Admission    TEXT  null,
+    Diagnosis    TEXT  null
+)
+
+CREATE TABLE Laboratory
+(
+    ID        INTEGER  default 0            not null,
+    Date      DATE default '0000-00-00' not null,
+    GOT       INTEGER                       null,
+    GPT       INTEGER                        null,
+    LDH       INTEGER                        null,
+    ALP       INTEGER                        null,
+    TP        REAL             null,
+    ALB       REAL             null,
+    UA        REAL             null,
+    UN        INTEGER                       null,
+    CRE       REAL             null,
+    `T-BIL`   REAL             null,
+    `T-CHO`   INTEGER                       null,
+    TG        INTEGER                       null,
+    CPK       INTEGER                       null,
+    GLU       INTEGER                       null,
+    WBC       REAL             null,
+    RBC       REAL             null,
+    HGB       REAL             null,
+    HCT       REAL             null,
+    PLT       INTEGER                       null,
+    PT        REAL             null,
+    APTT      INTEGER                       null,
+    FG        REAL             null,
+    PIC       INTEGER                       null,
+    TAT       INTEGER                       null,
+    TAT2      INTEGER                       null,
+    `U-PRO`   TEXT              null,
+    IGG       INTEGER                       null,
+    IGA       INTEGER                       null,
+    IGM       INTEGER                       null,
+    CRP       TEXT              null,
+    RA        TEXT              null,
+    RF        TEXT              null,
+    C3        INTEGER                       null,
+    C4        INTEGER                       null,
+    RNP       TEXT              null,
+    SM        TEXT              null,
+    SC170     TEXT              null,
+    SSA       TEXT              null,
+    SSB       TEXT              null,
+    CENTROMEA TEXT              null,
+    DNA       TEXT              null,
+    `DNA-II`  INTEGER                       null,
+    primary key (ID, Date),
+        foreign key (ID) references Patient (ID)
+            on update cascade on delete cascade
+)
+
+-- Using valid SQLite and understanding External Knowledge, answer the following questions for the tables provided above.
+-- How many patients with an Ig G higher than normal?
+-- External Knowledge: Ig G higher than normal refers to IGG >= 2000; Should consider DISTINCT in the final result;
+
+
+Generate the SQLite for the above question after thinking step by step: 
+
+
+        
+In your response, you do not need to mention your intermediate steps. 
+        Do not include any comments in your response.
+        Do not need to start with the symbol ```
+        You only need to return the result SQLite SQL code
+        start from SELECT
+        
+
+GOLD SQL:
+SELECT COUNT(DISTINCT T1.ID) FROM Patient AS T1 INNER JOIN Laboratory AS T2 ON T1.ID = T2.ID INNER JOIN Examination AS T3 ON T3.ID = T2.ID WHERE T2.IGG >= 2000
+
+PREDICTED SQL:
+SELECT COUNT(DISTINCT l.ID) AS patients_with_high_igg
+FROM Laboratory AS l
+WHERE l.IGG >= 2000;
+
+Pred result rows (count): 1
+Gold result rows (count): 1
+Pred sample: [(136,)]
+Gold sample: [(9,)]
+==========================================================================================
+Example 3 | idx=13 | db_id=debit_card_specializing | difficulty=simple | kind=result_mismatch
+------------------------------------------------------------------------------------------
+QUESTION:
+What is the highest monthly consumption in the year 2012?
+
+PROMPT (truncated):
+CREATE TABLE customers
+(
+    CustomerID INTEGER UNIQUE     not null
+        primary key,
+    Segment    TEXT null,
+    Currency   TEXT null
+)
+
+CREATE TABLE gasstations
+(
+    GasStationID INTEGER    UNIQUE   not null
+        primary key,
+    ChainID      INTEGER          null,
+    Country      TEXT null,
+    Segment      TEXT null
+)
+
+CREATE TABLE products
+(
+    ProductID   INTEGER   UNIQUE      not null
+        primary key,
+    Description TEXT null
+)
+
+CREATE TABLE "transactions_1k"
+(
+    TransactionID INTEGER
+        primary key autoincrement,
+    Date          DATE,
+    Time          TEXT,
+    CustomerID    INTEGER,
+    CardID        INTEGER,
+    GasStationID  INTEGER,
+    ProductID     INTEGER,
+    Amount        INTEGER,
+    Price         REAL
+)
+
+CREATE TABLE sqlite_sequence(name,seq)
+
+CREATE TABLE "yearmonth"
+(
+    CustomerID  INTEGER not null
+        references customers
+            on update cascade on delete cascade
+        references customers,
+    Date        TEXT    not null,
+    Consumption REAL,
+    primary key (Date, CustomerID)
+)
+
+-- Using valid SQLite and understanding External Knowledge, answer the following questions for the tables provided above.
+-- What is the highest monthly consumption in the year 2012?
+-- External Knowledge: The first 4 strings of the Date values in the yearmonth table can represent year; The 5th and 6th string of the date can refer to month.
+
+
+Generate the SQLite for the above question after thinking step by step: 
+
+
+        
+In your response, you do not need to mention your intermediate steps. 
+        Do not include any comments in your response.
+        Do not need to start with the symbol ```
+        You only need to return the result SQLite SQL code
+        start from SELECT
+        
+
+GOLD SQL:
+SELECT SUM(Consumption) FROM yearmonth WHERE SUBSTR(Date, 1, 4) = '2012' GROUP BY SUBSTR(Date, 5, 2) ORDER BY SUM(Consumption) DESC LIMIT 1
+
+PREDICTED SQL:
+SELECT MAX(Consumption) AS HighestMonthlyConsumption2012
+FROM yearmonth
+WHERE SUBSTR(Date, 1, 4) = '2012';
+
+Pred result rows (count): 1
+Gold result rows (count): 1
+Pred sample: [(445279.69,)]
+Gold sample: [(51787161.74,)]
+==========================================================================================
+Example 4 | idx=84 | db_id=thrombosis_prediction | difficulty=simple | kind=result_mismatch
+------------------------------------------------------------------------------------------
+QUESTION:
+For patients with severe degree of thrombosis, list their ID, sex and disease the patient is diagnosed with.
+
+PROMPT (truncated):
+CREATE TABLE Examination
+(
+    ID                 INTEGER          null,
+    `Examination Date` DATE         null,
+    `aCL IgG`          REAL        null,
+    `aCL IgM`          REAL        null,
+    ANA                INTEGER          null,
+    `ANA Pattern`      TEXT null,
+    `aCL IgA`          INTEGER          null,
+    Diagnosis          TEXT null,
+    KCT                TEXT null,
+    RVVT              TEXT null,
+    LAC                TEXT null,
+    Symptoms           TEXT null,
+    Thrombosis         INTEGER          null,
+    foreign key (ID) references Patient (ID)
+            on update cascade on delete cascade
+)
+
+CREATE TABLE Patient
+(
+    ID           INTEGER default 0 not null
+        primary key,
+    SEX          TEXT  null,
+    Birthday     DATE          null,
+    Description  DATE          null,
+    `First Date` DATE          null,
+    Admission    TEXT  null,
+    Diagnosis    TEXT  null
+)
+
+CREATE TABLE Laboratory
+(
+    ID        INTEGER  default 0            not null,
+    Date      DATE default '0000-00-00' not null,
+    GOT       INTEGER                       null,
+    GPT       INTEGER                        null,
+    LDH       INTEGER                        null,
+    ALP       INTEGER                        null,
+    TP        REAL             null,
+    ALB       REAL             null,
+    UA        REAL             null,
+    UN        INTEGER                       null,
+    CRE       REAL             null,
+    `T-BIL`   REAL             null,
+    `T-CHO`   INTEGER                       null,
+    TG        INTEGER                       null,
+    CPK       INTEGER                       null,
+    GLU       INTEGER                       null,
+    WBC       REAL             null,
+    RBC       REAL             null,
+    HGB       REAL             null,
+    HCT       REAL             null,
+    PLT       INTEGER                       null,
+    PT        REAL             null,
+    APTT      INTEGER                       null,
+    FG        REAL             null,
+    PIC       INTEGER                       null,
+    TAT       INTEGER                       null,
+    TAT2      INTEGER                       null,
+    `U-PRO`   TEXT              null,
+    IGG       INTEGER                       null,
+    IGA       INTEGER                       null,
+    IGM       INTEGER                       null,
+    CRP       TEXT              null,
+    RA        TEXT              null,
+    RF        TEXT              null,
+    C3        INTEGER                       null,
+    C4        INTEGER                       null,
+    RNP       TEXT              null,
+    SM        TEXT              null,
+    SC170     TEXT              null,
+    SSA       TEXT              null,
+    SSB       TEXT              null,
+    CENTROMEA TEXT              null,
+    DNA       TEXT              null,
+    `DNA-II`  INTEGER                       null,
+    primary key (ID, Date),
+        foreign key (ID) references Patient (ID)
+            on update cascade on delete cascade
+)
+
+-- Using valid SQLite and understanding External Knowledge, answer the following questions for the tables provided above.
+-- For patients with severe degree of thrombosis, list their ID, sex and disease the patient is diagnosed with.
+-- External Knowledge: severe degree of thrombosis refers to thrombosis = 2; disease refers to diagnosis;
+
+
+Generate the SQLite for the above question after thinking step by step: 
+
+
+        
+In your response, you do not need to mention your intermediate steps. 
+        Do not include any comments in your response.
+        Do not need to start with the symbol ```
+        You only need to return the result SQLite SQL code
+        start from SELECT
+        
+
+GOLD SQL:
+SELECT DISTINCT T1.ID, T1.SEX, T1.Diagnosis FROM Patient AS T1 INNER JOIN Examination AS T2 ON T1.ID = T2.ID WHERE T2.Thrombosis = 2
+
+PREDICTED SQL:
+SELECT
+  p.ID,
+  p.SEX,
+  e.Diagnosis
+FROM Examination AS e
+JOIN Patient AS p
+  ON p.ID = e.ID
+WHERE e.Thrombosis = 2;
+
+Pred result rows (count): 3
+Gold result rows (count): 3
+Pred sample: [(163109, 'F', None), (2803470, 'F', 'SLE+Psy'), (4395720, 'F', 'SLE')]
+Gold sample: [(163109, 'F', 'SLE'), (2803470, 'F', 'SLE'), (4395720, 'F', 'SLE')]
+==========================================================================================
+Example 5 | idx=120 | db_id=thrombosis_prediction | difficulty=moderate | kind=result_mismatch
+------------------------------------------------------------------------------------------
+QUESTION:
+How many patients with a abnormal C-reactive protein don't have their data recorded?
+
+PROMPT (truncated):
+CREATE TABLE Examination
+(
+    ID                 INTEGER          null,
+    `Examination Date` DATE         null,
+    `aCL IgG`          REAL        null,
+    `aCL IgM`          REAL        null,
+    ANA                INTEGER          null,
+    `ANA Pattern`      TEXT null,
+    `aCL IgA`          INTEGER          null,
+    Diagnosis          TEXT null,
+    KCT                TEXT null,
+    RVVT              TEXT null,
+    LAC                TEXT null,
+    Symptoms           TEXT null,
+    Thrombosis         INTEGER          null,
+    foreign key (ID) references Patient (ID)
+            on update cascade on delete cascade
+)
+
+CREATE TABLE Patient
+(
+    ID           INTEGER default 0 not null
+        primary key,
+    SEX          TEXT  null,
+    Birthday     DATE          null,
+    Description  DATE          null,
+    `First Date` DATE          null,
+    Admission    TEXT  null,
+    Diagnosis    TEXT  null
+)
+
+CREATE TABLE Laboratory
+(
+    ID        INTEGER  default 0            not null,
+    Date      DATE default '0000-00-00' not null,
+    GOT       INTEGER                       null,
+    GPT       INTEGER                        null,
+    LDH       INTEGER                        null,
+    ALP       INTEGER                        null,
+    TP        REAL             null,
+    ALB       REAL             null,
+    UA        REAL             null,
+    UN        INTEGER                       null,
+    CRE       REAL             null,
+    `T-BIL`   REAL             null,
+    `T-CHO`   INTEGER                       null,
+    TG        INTEGER                       null,
+    CPK       INTEGER                       null,
+    GLU       INTEGER                       null,
+    WBC       REAL             null,
+    RBC       REAL             null,
+    HGB       REAL             null,
+    HCT       REAL             null,
+    PLT       INTEGER                       null,
+    PT        REAL             null,
+    APTT      INTEGER                       null,
+    FG        REAL             null,
+    PIC       INTEGER                       null,
+    TAT       INTEGER                       null,
+    TAT2      INTEGER                       null,
+    `U-PRO`   TEXT              null,
+    IGG       INTEGER                       null,
+    IGA       INTEGER                       null,
+    IGM       INTEGER                       null,
+    CRP       TEXT              null,
+    RA        TEXT              null,
+    RF        TEXT              null,
+    C3        INTEGER                       null,
+    C4        INTEGER                       null,
+    RNP       TEXT              null,
+    SM        TEXT              null,
+    SC170     TEXT              null,
+    SSA       TEXT              null,
+    SSB       TEXT              null,
+    CENTROMEA TEXT              null,
+    DNA       TEXT              null,
+    `DNA-II`  INTEGER                       null,
+    primary key (ID, Date),
+        foreign key (ID) references Patient (ID)
+            on update cascade on delete cascade
+)
+
+-- Using valid SQLite and understanding External Knowledge, answer the following questions for the tables provided above.
+-- How many patients with a abnormal C-reactive protein don't have their data recorded?
+-- External Knowledge: abnormal C-reactive protein refers to CRP ='+'; don't have data recorded refers to Description IS NULL;
+
+
+Generate the SQLite for the above question after thinking step by step: 
+
+
+        
+In your response, you do not need to mention your intermediate steps. 
+        Do not include any comments in your response.
+        Do not need to start with the symbol ```
+        You only need to return the result SQLite SQL code
+        start from SELECT
+        
+
+GOLD SQL:
+SELECT COUNT(T1.ID) FROM Patient AS T1 INNER JOIN Laboratory AS T2 ON T1.ID = T2.ID WHERE (T2.CRP = '+' ) AND T1.Description IS NULL
+
+PREDICTED SQL:
+SELECT COUNT(DISTINCT p.ID)
+FROM Patient p
+JOIN Laboratory l ON l.ID = p.ID
+WHERE l.CRP = '+'
+  AND p.Description IS NULL;
+
+Pred result rows (count): 1
+Gold result rows (count): 1
+Pred sample: [(25,)]
+Gold sample: [(208,)]

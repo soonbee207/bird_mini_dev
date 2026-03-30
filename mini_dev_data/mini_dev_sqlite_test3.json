@@ -1,0 +1,26 @@
+[
+  {
+    "question_id": 1484,
+    "db_id": "debit_card_specializing",
+    "question": "How many more \"discount\" gas stations does the Czech Republic have compared to Slovakia?",
+    "evidence": "Czech Republic can be represented as the Country value in gasstations table is 'CZE'; Slovakia can be represented as the Country value in the gasstations table is 'SVK';  Computation of more \"discount\" gas stations= Total no. of discount gas stations in Czech Republic - Total no. of discount gas stations in Slovakia",
+    "SQL": "SELECT SUM(IIF(Country = 'CZE', 1, 0)) - SUM(IIF(Country = 'SVK', 1, 0)) FROM gasstations WHERE Segment = 'Discount'",
+    "difficulty": "simple"
+  },
+  {
+    "question_id": 1498,
+    "db_id": "debit_card_specializing",
+    "question": "What is the highest monthly consumption in the year 2012?",
+    "evidence": "The first 4 strings of the Date values in the yearmonth table can represent year; The 5th and 6th string of the date can refer to month.",
+    "SQL": "SELECT SUM(Consumption) FROM yearmonth WHERE SUBSTR(Date, 1, 4) = '2012' GROUP BY SUBSTR(Date, 5, 2) ORDER BY SUM(Consumption) DESC LIMIT 1",
+    "difficulty": "simple"
+  },
+  {
+    "question_id": 1528,
+    "db_id": "debit_card_specializing",
+    "question": "What is the percentage of \"premium\" against the overall segment in Country = \"SVK\"?",
+    "evidence": "",
+    "SQL": "SELECT CAST(SUM(IIF(Country = 'SVK' AND Segment = 'Premium', 1, 0)) AS FLOAT) * 100 / SUM(IIF(Country = 'SVK', 1, 0)) FROM gasstations",
+    "difficulty": "simple"
+  }
+]

@@ -2,6 +2,8 @@ import sqlite3
 import pymysql
 import psycopg2
 
+## reads the SQLite DB and generates a CREATE TABLE schema prompt
+
 db_table_map = {
     "debit_card_specializing": [
         "customers",
@@ -135,6 +137,7 @@ def generate_schema_prompt_sqlite(db_path, num_rows=None):
         )
         create_prompt = cursor.fetchone()[0]
         schemas[table[0]] = create_prompt
+        
         if num_rows:
             cur_table = table[0]
             if cur_table in ["order", "by", "group"]:
@@ -147,7 +150,23 @@ def generate_schema_prompt_sqlite(db_path, num_rows=None):
             verbose_prompt = "/* \n {} example rows: \n SELECT * FROM {} LIMIT {}; \n {} \n */".format(
                 num_rows, cur_table, num_rows, rows_prompt
             )
-            schemas[table[0]] = "{} \n {}".format(create_prompt, verbose_prompt)
+
+            # Add distinct values for TEXT columns
+            distinct_hints = []
+            for col in column_names:
+                try:
+                    cursor.execute("SELECT DISTINCT {} FROM {} LIMIT 10".format(col, cur_table))
+                    distinct_vals = [str(r[0]) for r in cursor.fetchall() if r[0] is not None]
+                    if 2 <= len(distinct_vals) <= 10:
+                        distinct_hints.append("-- {}: {}".format(col, ", ".join(["'{}'".format(v) for v in distinct_vals])))
+                except:
+                    pass
+
+            if distinct_hints:
+                distinct_prompt = "/* Distinct values hint:\n{}\n*/".format("\n".join(distinct_hints))
+                schemas[table[0]] = "{} \n {} \n {}".format(create_prompt, verbose_prompt, distinct_prompt)
+            else:
+                schemas[table[0]] = "{} \n {}".format(create_prompt, verbose_prompt)
 
     for k, v in schemas.items():
         full_schema_prompt_list.append(v)

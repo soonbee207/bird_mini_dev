@@ -1,0 +1,5 @@
+{
+    "0": "SELECT\n  (SELECT COUNT(GasStationID) FROM gasstations WHERE Country = 'CZE' AND Segment = 'discount')\n  -\n  (SELECT COUNT(GasStationID) FROM gasstations WHERE Country = 'SVK' AND Segment = 'discount')\t----- bird -----\tdebit_card_specializing",
+    "1": "SELECT SUM(Consumption) AS HighestMonthlyConsumption\nFROM yearmonth\nWHERE SUBSTR(Date,1,4)='2012'\nGROUP BY SUBSTR(Date,5,2)\nORDER BY SUM(Consumption) DESC\nLIMIT 1\t----- bird -----\tdebit_card_specializing",
+    "2": "SELECT 100.0 * SUM(CASE WHEN Segment = 'Premium' THEN 1 ELSE 0 END) / COUNT(*) AS premium_percentage\nFROM gasstations\nWHERE Country = 'SVK'\t----- bird -----\tdebit_card_specializing"
+}

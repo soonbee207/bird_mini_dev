@@ -10,7 +10,7 @@ import concurrent.futures
 
 from prompt import generate_combined_prompts_one
 
-
+## sends the prompt to GPT and gets back a SQL query
 def new_directory(path):
     if not os.path.exists(path):
         os.makedirs(path)
@@ -107,14 +107,29 @@ def post_process_response(response, db_path):
     return sql
 
 
+# Replace the existing imports at the top of gpt_request.py with these:
+from postprocess import postprocess_sql   # add this line
+
+# ── Replace worker_function with this ─────────────────────────────────────────
 def worker_function(question_data):
     prompt, engine, client, db_path, question, i = question_data
 
+    # Initial GPT call
     response = connect_gpt(engine, prompt, 512, 0, ["--", "\n\n", ";", "#"], client)
-    sql = post_process_response(response, db_path)
 
+    # Full post-processing: normalize columns + hallucination retry
+    cleaned_sql = postprocess_sql(
+        sql=response,
+        question=question,
+        db_path=db_path,
+        original_prompt=prompt,
+        connect_gpt_fn=connect_gpt,
+        engine=engine,
+        client=client,
+    )
+
+    sql = post_process_response(cleaned_sql, db_path)
     print(f"Processed {i}th question")
-
     return sql, i
 
 

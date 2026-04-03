@@ -1,0 +1,273 @@
+{
+  "customers": {
+    "columns": [
+      {
+        "name": "CustomerID",
+        "type": "INTEGER",
+        "pk": true,
+        "notnull": true
+      },
+      {
+        "name": "Segment",
+        "type": "TEXT",
+        "pk": false,
+        "notnull": false
+      },
+      {
+        "name": "Currency",
+        "type": "TEXT",
+        "pk": false,
+        "notnull": false
+      }
+    ],
+    "sample_rows": [
+      [
+        3,
+        "SME",
+        "EUR"
+      ],
+      [
+        5,
+        "LAM",
+        "EUR"
+      ],
+      [
+        6,
+        "SME",
+        "EUR"
+      ]
+    ]
+  },
+  "gasstations": {
+    "columns": [
+      {
+        "name": "GasStationID",
+        "type": "INTEGER",
+        "pk": true,
+        "notnull": true
+      },
+      {
+        "name": "ChainID",
+        "type": "INTEGER",
+        "pk": false,
+        "notnull": false
+      },
+      {
+        "name": "Country",
+        "type": "TEXT",
+        "pk": false,
+        "notnull": false
+      },
+      {
+        "name": "Segment",
+        "type": "TEXT",
+        "pk": false,
+        "notnull": false
+      }
+    ],
+    "sample_rows": [
+      [
+        44,
+        13,
+        "CZE",
+        "Value for money"
+      ],
+      [
+        45,
+        6,
+        "CZE",
+        "Premium"
+      ],
+      [
+        46,
+        23,
+        "CZE",
+        "Other"
+      ]
+    ]
+  },
+  "products": {
+    "columns": [
+      {
+        "name": "ProductID",
+        "type": "INTEGER",
+        "pk": true,
+        "notnull": true
+      },
+      {
+        "name": "Description",
+        "type": "TEXT",
+        "pk": false,
+        "notnull": false
+      }
+    ],
+    "sample_rows": [
+      [
+        1,
+        "Rucn\u00ed zad\u00e1n\u00ed"
+      ],
+      [
+        2,
+        "Nafta"
+      ],
+      [
+        3,
+        "Special"
+      ]
+    ]
+  },
+  "sqlite_sequence": {
+    "columns": [
+      {
+        "name": "name",
+        "type": "",
+        "pk": false,
+        "notnull": false
+      },
+      {
+        "name": "seq",
+        "type": "",
+        "pk": false,
+        "notnull": false
+      }
+    ],
+    "sample_rows": [
+      [
+        "transactions_1k",
+        1000
+      ]
+    ]
+  },
+  "transactions_1k": {
+    "columns": [
+      {
+        "name": "TransactionID",
+        "type": "INTEGER",
+        "pk": true,
+        "notnull": false
+      },
+      {
+        "name": "Date",
+        "type": "DATE",
+        "pk": false,
+        "notnull": false
+      },
+      {
+        "name": "Time",
+        "type": "TEXT",
+        "pk": false,
+        "notnull": false
+      },
+      {
+        "name": "CustomerID",
+        "type": "INTEGER",
+        "pk": false,
+        "notnull": false
+      },
+      {
+        "name": "CardID",
+        "type": "INTEGER",
+        "pk": false,
+        "notnull": false
+      },
+      {
+        "name": "GasStationID",
+        "type": "INTEGER",
+        "pk": false,
+        "notnull": false
+      },
+      {
+        "name": "ProductID",
+        "type": "INTEGER",
+        "pk": false,
+        "notnull": false
+      },
+      {
+        "name": "Amount",
+        "type": "INTEGER",
+        "pk": false,
+        "notnull": false
+      },
+      {
+        "name": "Price",
+        "type": "REAL",
+        "pk": false,
+        "notnull": false
+      }
+    ],
+    "sample_rows": [
+      [
+        1,
+        "2012-08-24",
+        "09:41:00",
+        31543,
+        486621,
+        3704,
+        2,
+        28,
+        672.64
+      ],
+      [
+        2,
+        "2012-08-24",
+        "10:03:00",
+        46707,
+        550134,
+        3704,
+        2,
+        18,
+        430.72
+      ],
+      [
+        3,
+        "2012-08-24",
+        "10:03:00",
+        46707,
+        550134,
+        3704,
+        23,
+        1,
+        121.99
+      ]
+    ]
+  },
+  "yearmonth": {
+    "columns": [
+      {
+        "name": "CustomerID",
+        "type": "INTEGER",
+        "pk": true,
+        "notnull": true
+      },
+      {
+        "name": "Date",
+        "type": "TEXT",
+        "pk": true,
+        "notnull": true
+      },
+      {
+        "name": "Consumption",
+        "type": "REAL",
+        "pk": false,
+        "notnull": false
+      }
+    ],
+    "sample_rows": [
+      [
+        5,
+        "201207",
+        528.3
+      ],
+      [
+        5,
+        "201302",
+        1598.28
+      ],
+      [
+        5,
+        "201303",
+        1931.36
+      ]
+    ]
+  }
+}

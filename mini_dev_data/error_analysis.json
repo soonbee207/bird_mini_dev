@@ -1,0 +1,240 @@
+{
+  "stats": {
+    "correct": 7,
+    "total": 10,
+    "by_difficulty": {
+      "simple": {
+        "correct": 3,
+        "total": 3
+      },
+      "moderate": {
+        "correct": 3,
+        "total": 4
+      },
+      "challenging": {
+        "correct": 1,
+        "total": 3
+      }
+    },
+    "by_error_type": {
+      "correct": 7,
+      "wrong_result_manual_review": 1,
+      "hallucinated_column": 1,
+      "logic_error_wrong_aggregation": 1
+    }
+  },
+  "accuracy_pct": 70.0,
+  "results": [
+    {
+      "question_id": 1471,
+      "db_id": "debit_card_specializing",
+      "difficulty": "simple",
+      "question": "What is the ratio of customers who pay in EUR against customers who pay in CZK?",
+      "gold_sql": "SELECT CAST(SUM(IIF(Currency = 'EUR', 1, 0)) AS FLOAT) / SUM(IIF(Currency = 'CZK', 1, 0)) AS ratio FROM customers",
+      "predicted_sql": "SELECT\n  CAST(SUM(CASE WHEN Currency = 'EUR' THEN 1 ELSE 0 END) AS REAL) /\n  SUM(CASE WHEN Currency = 'CZK' THEN 1 ELSE 0 END) AS ratio_eur_to_czk\nFROM customers",
+      "gold_result": "[(0.06572769953051644,)]",
+      "pred_result": "[(0.06572769953051644,)]",
+      "gold_error": null,
+      "pred_error": null,
+      "error_type": "correct",
+      "hallucinated": [],
+      "is_correct": true
+    },
+    {
+      "question_id": 1472,
+      "db_id": "debit_card_specializing",
+      "difficulty": "moderate",
+      "question": "In 2012, who had the least consumption in LAM?",
+      "gold_sql": "SELECT T1.CustomerID FROM customers AS T1 INNER JOIN yearmonth AS T2 ON T1.CustomerID = T2.CustomerID WHERE T1.Segment = 'LAM' AND SUBSTR(T2.Date, 1, 4) = '2012' GROUP BY T1.CustomerID ORDER BY SUM(T2.Consumption) ASC LIMIT 1",
+      "predicted_sql": "SELECT y.CustomerID\nFROM yearmonth AS y\nJOIN customers AS c ON c.CustomerID = y.CustomerID\nWHERE c.Segment = 'LAM'\n  AND y.Date BETWEEN '201201' AND '201212'\nGROUP BY y.CustomerID\nORDER BY SUM(y.Consumption) ASC\nLIMIT 1",
+      "gold_result": "[(47273,)]",
+      "pred_result": "[(47273,)]",
+      "gold_error": null,
+      "pred_error": null,
+      "error_type": "correct",
+      "hallucinated": [],
+      "is_correct": true
+    },
+    {
+      "question_id": 1473,
+      "db_id": "debit_card_specializing",
+      "difficulty": "moderate",
+      "question": "What was the average monthly consumption of customers in SME for the year 2013?",
+      "gold_sql": "SELECT AVG(T2.Consumption) / 12 FROM customers AS T1 INNER JOIN yearmonth AS T2 ON T1.CustomerID = T2.CustomerID WHERE SUBSTR(T2.Date, 1, 4) = '2013' AND T1.Segment = 'SME'",
+      "predicted_sql": "SELECT AVG(y.Consumption) / 12 AS AverageMonthlyConsumption\nFROM yearmonth y\nJOIN customers c ON c.CustomerID = y.CustomerID\nWHERE c.Segment = 'SME'\n  AND y.Date BETWEEN '201301' AND '201312'",
+      "gold_result": "[(459.9562642870894,)]",
+      "pred_result": "[(459.9562642870894,)]",
+      "gold_error": null,
+      "pred_error": null,
+      "error_type": "correct",
+      "hallucinated": [],
+      "is_correct": true
+    },
+    {
+      "question_id": 1476,
+      "db_id": "debit_card_specializing",
+      "difficulty": "challenging",
+      "question": "What was the difference in gas consumption between CZK-paying customers and EUR-paying customers in 2012?",
+      "gold_sql": "SELECT SUM(IIF(T1.Currency = 'CZK', T2.Consumption, 0)) - SUM(IIF(T1.Currency = 'EUR', T2.Consumption, 0)) FROM customers AS T1 INNER JOIN yearmonth AS T2 ON T1.CustomerID = T2.CustomerID WHERE SUBSTR(T2.Date, 1, 4) = '2012'",
+      "predicted_sql": "SELECT\n  SUM(CASE WHEN c.Currency = 'CZK' THEN y.Consumption ELSE 0 END) - SUM(CASE WHEN c.Currency = 'EUR' THEN y.Consumption ELSE 0 END) AS ConsumptionDifference\nFROM yearmonth y\nJOIN customers c ON c.CustomerID = y.CustomerID\nWHERE y.Date BETWEEN '201201' AND '201212'",
+      "gold_result": "[(402524570.17,)]",
+      "pred_result": "[(402524570.17,)]",
+      "gold_error": null,
+      "pred_error": null,
+      "error_type": "correct",
+      "hallucinated": [],
+      "is_correct": true
+    },
+    {
+      "question_id": 1479,
+      "db_id": "debit_card_specializing",
+      "difficulty": "moderate",
+      "question": "Which year recorded the most consumption of gas paid in CZK?",
+      "gold_sql": "SELECT SUBSTR(T2.Date, 1, 4) FROM customers AS T1 INNER JOIN yearmonth AS T2 ON T1.CustomerID = T2.CustomerID WHERE T1.Currency = 'CZK' GROUP BY SUBSTR(T2.Date, 1, 4) ORDER BY SUM(T2.Consumption) DESC LIMIT 1",
+      "predicted_sql": "SELECT SUBSTR(y.Date, 1, 4) AS Year\nFROM yearmonth AS y\nJOIN customers AS c ON c.CustomerID = y.CustomerID\nWHERE c.Currency = 'CZK'\nGROUP BY SUBSTR(y.Date, 1, 4)\nORDER BY SUM(y.Consumption) DESC\nLIMIT 1",
+      "gold_result": "[('2013',)]",
+      "pred_result": "[('2013',)]",
+      "gold_error": null,
+      "pred_error": null,
+      "error_type": "correct",
+      "hallucinated": [],
+      "is_correct": true
+    },
+    {
+      "question_id": 1480,
+      "db_id": "debit_card_specializing",
+      "difficulty": "moderate",
+      "question": "What was the gas consumption peak month for SME customers in 2013?",
+      "gold_sql": "SELECT SUBSTR(T2.Date, 5, 2) FROM customers AS T1 INNER JOIN yearmonth AS T2 ON T1.CustomerID = T2.CustomerID WHERE SUBSTR(T2.Date, 1, 4) = '2013' AND T1.Segment = 'SME' GROUP BY SUBSTR(T2.Date, 5, 2) ORDER BY SUM(T2.Consumption) DESC LIMIT 1",
+      "predicted_sql": "SELECT SUBSTR(ym.Date,5,2) AS Month, SUM(ym.Consumption) AS TotalConsumption\nFROM yearmonth AS ym\nJOIN customers AS c ON c.CustomerID = ym.CustomerID\nWHERE c.Segment = 'SME'\n  AND ym.Date BETWEEN '201301' AND '201312'\nGROUP BY SUBSTR(ym.Date,5,2)\nORDER BY SUM(ym.Consumption) DESC\nLIMIT 1",
+      "gold_result": "[('04',)]",
+      "pred_result": "[('04', 126047776.92)]",
+      "gold_error": null,
+      "pred_error": null,
+      "error_type": "wrong_result_manual_review",
+      "hallucinated": [],
+      "is_correct": false
+    },
+    {
+      "question_id": 1481,
+      "db_id": "debit_card_specializing",
+      "difficulty": "challenging",
+      "question": "What is the difference in the annual average consumption of the customers with the least amount of consumption paid in CZK for 2013 between SME and LAM, LAM and KAM, and KAM and SME?",
+      "gold_sql": "SELECT CAST(SUM(IIF(T1.Segment = 'SME', T2.Consumption, 0)) AS REAL) / COUNT(T1.CustomerID) - CAST(SUM(IIF(T1.Segment = 'LAM', T2.Consumption, 0)) AS REAL) / COUNT(T1.CustomerID) , CAST(SUM(IIF(T1.Segment = 'LAM', T2.Consumption, 0)) AS REAL) / COUNT(T1.CustomerID) - CAST(SUM(IIF(T1.Segment = 'KAM', T2.Consumption, 0)) AS REAL) / COUNT(T1.CustomerID) , CAST(SUM(IIF(T1.Segment = 'KAM', T2.Consumption, 0)) AS REAL) / COUNT(T1.CustomerID) - CAST(SUM(IIF(T1.Segment = 'SME', T2.Consumption, 0)) AS REAL) / COUNT(T1.CustomerID) FROM customers AS T1 INNER JOIN yearmonth AS T2 ON T1.CustomerID = T2.CustomerID WHERE T1.Currency = 'CZK' AND T2.Consumption = ( SELECT MIN(Consumption) FROM yearmonth ) AND T2.Date BETWEEN 201301 AND 201312",
+      "predicted_sql": "SELECT\n  sme.annual_avg - lam.annual_avg AS diff_sme_lam,\n  lam.annual_avg - kam.annual_avg AS diff_lam_kam,\n  kam.annual_avg - sme.annual_avg AS diff_kam_sme\nFROM\n  (\n    SELECT SUM(y.Consumption) * 1.0 / COUNT(*) AS annual_avg\n    FROM yearmonth y\n    JOIN customers c ON c.CustomerID = y.CustomerID\n    JOIN (\n      SELECT MIN(t.year_total) AS min_total\n      FROM (\n        SELECT y2.CustomerID, SUM(y2.Consumption) AS year_total\n        FROM yearmonth y2\n        JOIN customers c2 ON c2.CustomerID = y2.CustomerID\n        WHERE y2.Date BETWEEN '201301' AND '201312'\n          AND c2.Currency = 'CZK'\n          AND c2.Segment = 'SME'\n        GROUP BY y2.CustomerID\n      ) t\n    ) m\n    WHERE y.Date BETWEEN '201301' AND '201312'\n      AND c.Currency = 'CZK'\n      AND c.Segment = 'SME'\n      AND y.CustomerID IN (\n        SELECT t2.CustomerID\n        FROM (\n          SELECT y3.CustomerID, SUM(y3.Consumption) AS year_total\n          FROM yearmonth y3\n          JOIN customers c3 ON c3.CustomerID = y3.CustomerID\n          WHERE y3.Date BETWEEN '201301' AND '201312'\n            AND c3.Currency = 'CZK'\n            AND c3.Segment = 'SME'\n          GROUP BY y3.CustomerID\n        ) t2\n        WHERE t2.year_total = m.min_total\n      )\n  ) AS sme\nCROSS JOIN\n  (\n    SELECT SUM(y.Consumption) * 1.0 / COUNT(*) AS annual_avg\n    FROM yearmonth y\n    JOIN customers c ON c.CustomerID = y.CustomerID\n    JOIN (\n      SELECT MIN(t.year_total) AS min_total\n      FROM (\n        SELECT y2.CustomerID, SUM(y2.Consumption) AS year_total\n        FROM yearmonth y2\n        JOIN customers c2 ON c2.CustomerID = y2.CustomerID\n        WHERE y2.Date BETWEEN '201301' AND '201312'\n          AND c2.Currency = 'CZK'\n          AND c2.Segment = 'LAM'\n        GROUP BY y2.CustomerID\n      ) t\n    ) m\n    WHERE y.Date BETWEEN '201301' AND '201312'\n      AND c.Currency = 'CZK'\n      AND c.Segment = 'LAM'\n      AND y.CustomerID IN (\n        SELECT t2.CustomerID\n        FROM (\n          SELECT y3.CustomerID, SUM(y3.Consumption) AS year_total\n          FROM yearmonth y3\n          JOIN customers c3 ON c3.CustomerID = y3.CustomerID\n          WHERE y3.Date BETWEEN '201301' AND '201312'\n            AND c3.Currency = 'CZK'\n            AND c3.Segment = 'LAM'\n          GROUP BY y3.CustomerID\n        ) t2\n        WHERE t2.year_total = m.min_total\n      )\n  ) AS lam\nCROSS JOIN\n  (\n    SELECT SUM(y.Consumption) * 1.0 / COUNT(*) AS annual_avg\n    FROM yearmonth y\n    JOIN customers c ON c.CustomerID = y.CustomerID\n    JOIN (\n      SELECT MIN(t.year_total) AS min_total\n      FROM (\n        SELECT y2.CustomerID, SUM(y2.Consumption) AS year_total\n        FROM yearmonth y2\n        JOIN customers c2 ON c2.CustomerID = y2.CustomerID\n        WHERE y2.Date BETWEEN '201301' AND '201312'\n          AND c2.Currency = 'CZK'\n          AND c2.Segment = 'KAM'\n        GROUP BY y2.CustomerID\n      ) t\n    ) m\n    WHERE y.Date BETWEEN '201301' AND '201312'\n      AND c.Currency = 'CZK'\n      AND c.Segment = 'KAM'\n      AND y.CustomerID IN (\n        SELECT t2.CustomerID\n        FROM (\n          SELECT y3.CustomerID, SUM(y3.Consumption) AS year_total\n          FROM yearmonth y3\n          JOIN customers c3 ON c3.CustomerID = y3.CustomerID\n          WHERE y3.Date BETWEEN '201301' AND '201312'\n            AND c3.Currency = 'CZK'\n            AND c3.Segment = 'KAM'\n          GROUP BY y3.CustomerID\n        ) t2\n        WHERE t2.year_total = m.min_total\n      )\n  ) AS kam",
+      "gold_result": "[(0.0, 582092.86, -582092.86)]",
+      "pred_result": "[(-7004.669999999999, 756.6674999999999, 6248.0025)]",
+      "gold_error": null,
+      "pred_error": null,
+      "error_type": "hallucinated_column",
+      "hallucinated": [
+        {
+          "type": "column",
+          "name": "annual_avg"
+        },
+        {
+          "type": "column",
+          "name": "annual_avg"
+        },
+        {
+          "type": "column",
+          "name": "annual_avg"
+        },
+        {
+          "type": "column",
+          "name": "annual_avg"
+        },
+        {
+          "type": "column",
+          "name": "annual_avg"
+        },
+        {
+          "type": "column",
+          "name": "annual_avg"
+        },
+        {
+          "type": "column",
+          "name": "year_total"
+        },
+        {
+          "type": "column",
+          "name": "year_total"
+        },
+        {
+          "type": "column",
+          "name": "min_total"
+        },
+        {
+          "type": "column",
+          "name": "year_total"
+        },
+        {
+          "type": "column",
+          "name": "year_total"
+        },
+        {
+          "type": "column",
+          "name": "min_total"
+        },
+        {
+          "type": "column",
+          "name": "year_total"
+        },
+        {
+          "type": "column",
+          "name": "year_total"
+        },
+        {
+          "type": "column",
+          "name": "min_total"
+        }
+      ],
+      "is_correct": false
+    },
+    {
+      "question_id": 1482,
+      "db_id": "debit_card_specializing",
+      "difficulty": "challenging",
+      "question": "Which of the three segments\u2014SME, LAM and KAM\u2014has the biggest and lowest percentage increases in consumption paid in EUR between 2012 and 2013?",
+      "gold_sql": "SELECT CAST((SUM(IIF(T1.Segment = 'SME' AND T2.Date LIKE '2013%', T2.Consumption, 0)) - SUM(IIF(T1.Segment = 'SME' AND T2.Date LIKE '2012%', T2.Consumption, 0))) AS FLOAT) * 100 / SUM(IIF(T1.Segment = 'SME' AND T2.Date LIKE '2012%', T2.Consumption, 0)), CAST(SUM(IIF(T1.Segment = 'LAM' AND T2.Date LIKE '2013%', T2.Consumption, 0)) - SUM(IIF(T1.Segment = 'LAM' AND T2.Date LIKE '2012%', T2.Consumption, 0)) AS FLOAT) * 100 / SUM(IIF(T1.Segment = 'LAM' AND T2.Date LIKE '2012%', T2.Consumption, 0)) , CAST(SUM(IIF(T1.Segment = 'KAM' AND T2.Date LIKE '2013%', T2.Consumption, 0)) - SUM(IIF(T1.Segment = 'KAM' AND T2.Date LIKE '2012%', T2.Consumption, 0)) AS FLOAT) * 100 / SUM(IIF(T1.Segment = 'KAM' AND T2.Date LIKE '2012%', T2.Consumption, 0)) FROM customers AS T1 INNER JOIN yearmonth AS T2 ON T1.CustomerID = T2.CustomerID",
+      "predicted_sql": "SELECT Segment,\n       CASE\n         WHEN SUM(CASE WHEN SUBSTR(ym.Date,1,4)='2013' THEN ym.Consumption ELSE 0 END) = 0 THEN NULL\n         ELSE (\n           (SUM(CASE WHEN SUBSTR(ym.Date,1,4)='2013' THEN ym.Consumption ELSE 0 END) -\n            SUM(CASE WHEN SUBSTR(ym.Date,1,4)='2012' THEN ym.Consumption ELSE 0 END)\n           ) * 100.0 /\n           SUM(CASE WHEN SUBSTR(ym.Date,1,4)='2013' THEN ym.Consumption ELSE 0 END)\n         )\n       END AS PercentageIncrease\nFROM yearmonth ym\nJOIN customers c ON c.CustomerID = ym.CustomerID\nWHERE c.Segment IN ('SME','LAM','KAM')\n  AND c.Currency = 'EUR'\n  AND SUBSTR(ym.Date,1,4) IN ('2012','2013')\nGROUP BY c.Segment\nHAVING SUM(CASE WHEN SUBSTR(ym.Date,1,4)='2012' THEN ym.Consumption ELSE 0 END) > 0\n   AND SUM(CASE WHEN SUBSTR(ym.Date,1,4)='2013' THEN ym.Consumption ELSE 0 END) > 0\n  AND (\n    CASE\n      WHEN SUM(CASE WHEN SUBSTR(ym.Date,1,4)='2013' THEN ym.Consumption ELSE 0 END) = 0 THEN NULL\n      ELSE (\n        (SUM(CASE WHEN SUBSTR(ym.Date,1,4)='2013' THEN ym.Consumption ELSE 0 END) -\n         SUM(CASE WHEN SUBSTR(ym.Date,1,4)='2012' THEN ym.Consumption ELSE 0 END)\n        ) * 100.0 /\n        SUM(CASE WHEN SUBSTR(ym.Date,1,4)='2013' THEN ym.Consumption ELSE 0 END)\n      )\n    END\n  ) IN (\n    SELECT MAX(PercentageIncrease)\n    FROM (\n      SELECT c2.Segment AS Segment,\n             CASE\n               WHEN SUM(CASE WHEN SUBSTR(ym2.Date,1,4)='2013' THEN ym2.Consumption ELSE 0 END) = 0 THEN NULL\n               ELSE (\n                 (SUM(CASE WHEN SUBSTR(ym2.Date,1,4)='2013' THEN ym2.Consumption ELSE 0 END) -\n                  SUM(CASE WHEN SUBSTR(ym2.Date,1,4)='2012' THEN ym2.Consumption ELSE 0 END)\n                 ) * 100.0 /\n                 SUM(CASE WHEN SUBSTR(ym2.Date,1,4)='2013' THEN ym2.Consumption ELSE 0 END)\n               )\n             END AS PercentageIncrease\n      FROM yearmonth ym2\n      JOIN customers c2 ON c2.CustomerID = ym2.CustomerID\n      WHERE c2.Segment IN ('SME','LAM','KAM')\n        AND c2.Currency = 'EUR'\n        AND SUBSTR(ym2.Date,1,4) IN ('2012','2013')\n      GROUP BY c2.Segment\n      HAVING SUM(CASE WHEN SUBSTR(ym2.Date,1,4)='2012' THEN ym2.Consumption ELSE 0 END) > 0\n         AND SUM(CASE WHEN SUBSTR(ym2.Date,1,4)='2013' THEN ym2.Consumption ELSE 0 END) > 0\n    )\n    UNION ALL\n    SELECT MIN(PercentageIncrease)\n    FROM (\n      SELECT c3.Segment AS Segment,\n             CASE\n               WHEN SUM(CASE WHEN SUBSTR(ym3.Date,1,4)='2013' THEN ym3.Consumption ELSE 0 END) = 0 THEN NULL\n               ELSE (\n                 (SUM(CASE WHEN SUBSTR(ym3.Date,1,4)='2013' THEN ym3.Consumption ELSE 0 END) -\n                  SUM(CASE WHEN SUBSTR(ym3.Date,1,4)='2012' THEN ym3.Consumption ELSE 0 END)\n                 ) * 100.0 /\n                 SUM(CASE WHEN SUBSTR(ym3.Date,1,4)='2013' THEN ym3.Consumption ELSE 0 END)\n               )\n             END AS PercentageIncrease\n      FROM yearmonth ym3\n      JOIN customers c3 ON c3.CustomerID = ym3.CustomerID\n      WHERE c3.Segment IN ('SME','LAM','KAM')\n        AND c3.Currency = 'EUR'\n        AND SUBSTR(ym3.Date,1,4) IN ('2012','2013')\n      GROUP BY c3.Segment\n      HAVING SUM(CASE WHEN SUBSTR(ym3.Date,1,4)='2012' THEN ym3.Consumption ELSE 0 END) > 0\n         AND SUM(CASE WHEN SUBSTR(ym3.Date,1,4)='2013' THEN ym3.Consumption ELSE 0 END) > 0\n    )\n  )",
+      "gold_result": "[(545.4018999790969, 681.5824574939339, 708.1124062978664)]",
+      "pred_result": "[('LAM', 84.37082878168067), ('SME', 88.01984961472203)]",
+      "gold_error": null,
+      "pred_error": null,
+      "error_type": "logic_error_wrong_aggregation",
+      "hallucinated": [],
+      "is_correct": false
+    },
+    {
+      "question_id": 1483,
+      "db_id": "debit_card_specializing",
+      "difficulty": "simple",
+      "question": "How much did customer 6 consume in total between August and November 2013?",
+      "gold_sql": "SELECT SUM(Consumption) FROM yearmonth WHERE CustomerID = 6 AND Date BETWEEN '201308' AND '201311'",
+      "predicted_sql": "SELECT SUM(Consumption) AS TotalConsumption\nFROM yearmonth\nWHERE CustomerID = 6\n  AND Date BETWEEN '201308' AND '201311'",
+      "gold_result": "[(1224.96,)]",
+      "pred_result": "[(1224.96,)]",
+      "gold_error": null,
+      "pred_error": null,
+      "error_type": "correct",
+      "hallucinated": [],
+      "is_correct": true
+    },
+    {
+      "question_id": 1484,
+      "db_id": "debit_card_specializing",
+      "difficulty": "simple",
+      "question": "How many more \"discount\" gas stations does the Czech Republic have compared to Slovakia?",
+      "gold_sql": "SELECT SUM(IIF(Country = 'CZE', 1, 0)) - SUM(IIF(Country = 'SVK', 1, 0)) FROM gasstations WHERE Segment = 'Discount'",
+      "predicted_sql": "SELECT\n  (SELECT COUNT(*) FROM gasstations WHERE Country = 'CZE' AND Segment = 'Discount')\n  - (SELECT COUNT(*) FROM gasstations WHERE Country = 'SVK' AND Segment = 'Discount') AS MoreDiscountGasStationsInCZEThanSVK",
+      "gold_result": "[(176,)]",
+      "pred_result": "[(176,)]",
+      "gold_error": null,
+      "pred_error": null,
+      "error_type": "correct",
+      "hallucinated": [],
+      "is_correct": true
+    }
+  ]
+}

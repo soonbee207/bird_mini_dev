@@ -3,3 +3,8 @@
 .env.**.sqlite
 *.sqlite-shm
 *.sqlite-wal
+mini_dev_data/dev_databases/
+mini_dev_data/merged_analysis.json
+mini_dev_data/merged_analysis_simple_only.json
+mini_dev_data/mini_dev_sqlite_pretty.json
+mini_dev_data/mini_dev_sqlite_test*.json

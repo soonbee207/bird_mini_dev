@@ -8,7 +8,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 import concurrent.futures
 
-from prompt import generate_combined_prompts_one
+from prompt_v2 import generate_combined_prompts_one
 
 
 def new_directory(path):
@@ -81,9 +81,8 @@ def decouple_question_schema(datasets, db_root_path):
 def generate_sql_file(sql_lst, output_path=None):
     sql_lst.sort(key=lambda x: x[1])
     result = {}
-
-    for i, (sql, _) in enumerate(sql_lst):
-        result[i] = sql
+    for sql, idx in sql_lst:
+        result[str(idx)] = sql
 
     if output_path:
         directory_path = os.path.dirname(output_path)
@@ -126,9 +125,13 @@ def collect_response_from_gpt(
     sql_dialect,
     num_threads=3,
     knowledge_list=None,
+    global_indices=None,
 ):
-
     client = init_client(api_key)
+    if global_indices is None:
+        global_indices = list(range(len(question_list)))
+    if len(global_indices) != len(question_list):
+        raise ValueError("global_indices length must match question_list")
 
     tasks = [
         (
@@ -142,7 +145,7 @@ def collect_response_from_gpt(
             client,
             db_path_list[i],
             question_list[i],
-            i,
+            global_indices[i],
         )
         for i in range(len(question_list))
     ]
@@ -163,7 +166,13 @@ def collect_response_from_gpt(
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        epilog=(
+            "Slice example: 1-based questions 248 through 500 (253 items) = 0-based indices 247..499 → "
+            "--offset 247 --limit 253. Omit --limit to run from OFFSET to the end of the dataset."
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
 
     parser.add_argument("--eval_path", type=str)
     parser.add_argument("--mode", type=str)
@@ -175,13 +184,33 @@ if __name__ == "__main__":
     parser.add_argument("--chain_of_thought", type=str)
     parser.add_argument("--num_processes", type=int)
     parser.add_argument("--sql_dialect", type=str)
+    parser.add_argument(
+        "--offset",
+        type=int,
+        default=0,
+        help="0-based start index in eval JSON (e.g. 247 = 248th question)",
+    )
+    parser.add_argument(
+        "--limit",
+        type=int,
+        default=None,
+        help="Number of questions to run from offset; omit for all remaining",
+    )
 
     args = parser.parse_args()
 
     eval_data = json.load(open(args.eval_path, "r"))
+    n_total = len(eval_data)
+    off = max(0, args.offset)
+    if off >= n_total:
+        raise SystemExit(f"--offset {off} >= dataset size {n_total}")
+    end = n_total if args.limit is None else min(off + args.limit, n_total)
+    subset = eval_data[off:end]
+    global_indices = list(range(off, end))
+    print(f"Running {len(subset)} questions (indices {off}..{end - 1} inclusive of {n_total})")
 
     question_list, db_path_list, knowledge_list = decouple_question_schema(
-        eval_data, args.db_root_path
+        subset, args.db_root_path
     )
 
     responses = collect_response_from_gpt(
@@ -192,6 +221,7 @@ if __name__ == "__main__":
         args.sql_dialect,
         args.num_processes,
         knowledge_list if args.use_knowledge == "True" else None,
+        global_indices=global_indices,
     )
 
     output_name = (

@@ -1,0 +1,55 @@
+{
+  "total_failures": 175,
+  "by_difficulty_category": {
+    "challenging": {
+      "missing_select_columns": 20,
+      "wrong_where_condition": 11,
+      "wrong_aggregation_in_select": 7,
+      "extra_select_columns": 3,
+      "extra_aggregate_in_select": 3,
+      "timeout": 1
+    },
+    "simple": {
+      "wrong_where_condition": 19,
+      "missing_select_columns": 4,
+      "wrong_aggregation_in_select": 2,
+      "extra_select_columns": 1,
+      "wrong_columns_selected": 1,
+      "extra_where_clause": 1,
+      "pred_error": 1
+    },
+    "moderate": {
+      "wrong_where_condition": 40,
+      "missing_select_columns": 35,
+      "wrong_aggregation_in_select": 12,
+      "extra_select_columns": 6,
+      "pred_error": 2,
+      "extra_concat": 2,
+      "wrong_join_condition": 1,
+      "missing_where_clause": 1,
+      "missing_join": 1,
+      "timeout": 1
+    }
+  },
+  "by_difficulty_bucket": {
+    "challenging": {
+      "projection_shape": 33,
+      "evidence_date": 11,
+      "execution": 1
+    },
+    "simple": {
+      "evidence_date": 20,
+      "projection_shape": 7,
+      "join_table_path": 1,
+      "execution": 1
+    },
+    "moderate": {
+      "projection_shape": 55,
+      "evidence_date": 41,
+      "execution": 3,
+      "join_table_path": 2
+    }
+  },
+  "recommended_track": "v3_1_projection",
+  "recommended_track_reason": "Dominant moderate+challenging bucket: projection_shape (88 of 146)"
+}
